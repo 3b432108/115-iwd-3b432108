@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人介紹</title>
+    <style>
+        /* CSS 變數定義：大地色系調色盤 */
+        :root {
+            --bg-color: #F7F5F0;        /* 淺沙色/米白背景 */
+            --card-bg: #FFFFFF;         /* 純白卡片背景 */
+            --text-primary: #4A3E3D;    /* 深灰褐色（主要文字，比純黑更柔和） */
+            --text-secondary: #8C7A6B;  /* 暖灰褐色（座右銘與次要文字） */
+            --accent-color: #A67B5B;    /* 焦糖棕/大地暖色（強調色） */
+            --border-color: #E6E0D4;    /* 淺燕麥色邊框 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 個人名片卡片容器 */
+        .profile-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(74, 62, 61, 0.05);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        /* 大頭貼區塊 */
+        .avatar-container {
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 24px auto;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid var(--border-color);
+            background-color: #EFECE6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 姓名標題 */
+        .name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* 座右銘 */
+        .motto {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 24px;
+            position: relative;
+            display: inline-block;
+            padding: 0 15px;
+        }
+
+        /* 座右銘兩側裝飾線 */
+        .motto::before, .motto::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 10px;
+            height: 1px;
+            background-color: var(--accent-color);
+        }
+        .motto::before { left: 0; }
+        .motto::after { right: 0; }
+
+        /* 分隔線 */
+        .divider {
+            width: 50px;
+            height: 2px;
+            background-color: var(--accent-color);
+            margin: 0 auto 24px auto;
+            border-radius: 2px;
+            opacity: 0.7;
+        }
+
+        /* 自我介紹文字區塊 */
+        .bio {
+            font-size: 0.98rem;
+            color: var(--text-primary);
+            text-align: justify;
+            text-justify: inter-ideograph;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="profile-card">
+        <!-- 大頭貼區塊 -->
+        <div class="avatar-container">
+            <!-- 請將 src 替換為您的圖片網址，或本地圖片路徑 -->
+            <img src="https://via.placeholder.com/150/D2B48C/4A3E3D?text=Avatar" alt="個人大頭貼">
+        </div>
+
+        <!-- 姓名標題 -->
+        <h1 class="name">王小明</h1>
+
+        <!-- 座右銘 -->
+        <p class="motto">「順應自然的節奏，在平淡中尋找優雅。」</p>
+
+        <!-- 分隔線 -->
+        <div class="divider"></div>
+
+        <!-- 自我介紹 -->
+        <div class="bio">
+            <p>你好！我是一名熱愛生活與設計的創作者。喜歡探索自然色調與簡約的美學，平時熱衷於閱讀、攝影與網頁開發。相信好的設計不只能解決問題，更能帶來內心的平靜。歡迎來到我的個人小天地！</p>
+        </div>
+    </main>
+
+</body>
+</html>
