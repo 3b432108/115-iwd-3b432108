@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人介紹 - [隨風飄搖的小葉子]</title>
+    <!-- 引入 Font Awesome 圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 基礎樣式重置 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Microsoft JhengHei, sans-serif;
+            /* 淺色大地系背景：溫暖的米沙色 */
+            background-color: #f7f5f0;
+            color: #3d312a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        /* 卡片容器 */
+        .profile-card {
+            /* 燕麥暖白背景 */
+            background-color: #fffcf8;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(61, 49, 42, 0.06);
+            border: 1px solid #e8e2d8;
+            max-width: 480px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 頁首區塊 (Header) */
+        .profile-header {
+            margin-bottom: 24px;
+        }
+
+        /* 大頭貼區塊 (正方形) */
+        .avatar-container {
+            margin-bottom: 24px;
+        }
+
+        .avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 12px; 
+            object-fit: cover;
+            border: 3px solid #8c7a6b;
+            box-shadow: 0 6px 15px rgba(61, 49, 42, 0.12);
+        }
+
+        /* 姓名標題 */
+        .name {
+            font-size: 2rem;
+            color: #3d312a;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        /* 座右銘 */
+        .motto {
+            font-size: 0.98rem;
+            color: #8c7a6b;
+            font-style: italic;
+            position: relative;
+            display: inline-block;
+            padding: 0 15px;
+        }
+
+        .motto::before, .motto::after {
+            content: '"';
+            font-size: 1.2rem;
+            color: #a47148;
+        }
+
+        /* 自我介紹文字 (Article) */
+        .bio {
+            font-size: 0.98rem;
+            line-height: 1.8;
+            color: #5c4a3e;
+            background-color: #f2ece4;
+            padding: 22px;
+            border-radius: 10px;
+            border-left: 4px solid #a47148;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        /* 導覽列與社群媒體連結區塊 (Nav) */
+        .social-nav {
+            margin-bottom: 30px;
+        }
+
+        .social-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            list-style: none;
+        }
+
+        .social-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            background-color: #f7f5f0;
+            border: 1px solid #e2dacd;
+            border-radius: 8px;
+            color: #5c4a3e;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+        }
+
+        .social-item i {
+            font-size: 1.35rem;
+            width: 28px;
+            text-align: center;
+            margin-right: 10px;
+            color: #a47148;
+            transition: color 0.25s ease, transform 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .social-item i.fa-line {
+            transform: scale(1.15);
+        }
+
+        .social-item:hover {
+            background-color: #8c7a6b;
+            color: #ffffff;
+            border-color: #8c7a6b;
+        }
+
+        .social-item:hover i {
+            color: #ffffff;
+        }
+
+        .social-item:hover i.fa-line {
+            transform: scale(1.15);
+        }
+
+        /* 區塊分隔線 */
+        .divider {
+            border: none;
+            height: 1px;
+            background-color: #e8e2d8;
+            margin: 30px 0;
+        }
+
+        /* 活動報名表單區塊 (Section) */
+        .event-form-section {
+            text-align: left;
+        }
+
+        .form-title {
+            font-size: 1.25rem;
+            color: #3d312a;
+            margin-bottom: 18px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #5c4a3e;
+            margin-bottom: 6px;
+        }
+
+        .required {
+            color: #a47148;
+            margin-left: 2px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #3d312a;
+            background-color: #f7f5f0;
+            border: 1px solid #e2dacd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: #a47148;
+            box-shadow: 0 0 0 3px rgba(164, 113, 72, 0.15);
+            background-color: #ffffff;
+        }
+
+        /* 提交按鈕 */
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background-color: #a47148;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.25s ease, transform 0.1s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #8c5d37;
+        }
+
+        .submit-btn:active {
+            transform: scale(0.99);
+        }
+
+        /* 頁尾區塊 (Footer) */
+        .profile-footer {
+            font-size: 0.85rem;
+            color: #8c7a6b;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="profile-card">
+        
+        <!-- 1. Header 區塊：大頭貼、姓名與座右銘 -->
+        <header class="profile-header">
+            <div class="avatar-container">
+                <img class="avatar" src="photo1.jpg" alt="個人大頭貼">
+            </div>
+            <h1 class="name">隨風飄搖的小葉子</h1>
+            <p class="motto">擁抱自然的節奏，在平淡生活中發現微小的美好。</p>
+        </header>
+
+        <!-- 2. Nav 區塊：社群媒體連結區 -->
+        <nav class="social-nav" aria-label="社群媒體連結">
+            <ul class="social-links">
+                <li>
+                    <a href="https://instagram.com/你的帳號" target="_blank" rel="noopener noreferrer" class="social-item">
+                        <i class="fa-brands fa-instagram"></i>
+                        <span>@duan_xuan_biu</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://line.me/ti/p/你的LINE連結" target="_blank" rel="noopener noreferrer" class="social-item">
+                        <i class="fa-brands fa-line"></i>
+                        <span>ID：duanxuan</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 3. Main 區塊：主要內容 (自我介紹與活動報名表單) -->
+        <main>
+            <!-- 自我介紹 -->
+            <article class="bio">
+                <p>這裡是隨風飄搖的小葉子！目前是一名網頁視覺設計師，喜歡運用簡單、質樸的設計語言將想法實現。平時熱衷於閱讀、攝影與網頁開發以及品嚐手沖咖啡:D</p>
+            </article>
+
+            <hr class="divider">
+
+            <!-- 活動報名表單區塊 -->
+            <section class="event-form-section">
+                <h2 class="form-title">近期講座與活動報名</h2>
+
+                <form action="#" method="POST">
+                    <!-- 姓名欄位 (必填) -->
+                    <div class="form-group">
+                        <label for="userName">姓名<span class="required">*</span></label>
+                        <input type="text" id="userName" name="userName" class="form-control" placeholder="請輸入您的姓名" required>
+                    </div>
+
+                    <!-- Email欄位 (必填) -->
+                    <div class="form-group">
+                        <label for="userEmail">Email<span class="required">*</span></label>
+                        <input type="email" id="userEmail" name="userEmail" class="form-control" placeholder="example@email.com" required>
+                    </div>
+
+                    <!-- 報名場次欄位 (下拉式選單) -->
+                    <div class="form-group">
+                        <label for="eventSession">報名場次</label>
+                        <select id="eventSession" name="eventSession" class="form-control">
+                            <option value="" disabled selected>請選擇想參加的場次</option>
+                            <option value="session-1">場次 A：大地色系網頁視覺設計分享 (10/15)</option>
+                            <option value="session-2">場次 B：手沖咖啡與生活美學工作坊 (10/22)</option>
+                            <option value="session-3">場次 C：個人品牌質感建立實戰 (11/05)</option>
+                        </select>
+                    </div>
+
+                    <!-- 提交按鈕 -->
+                    <button type="submit" class="submit-btn">送出報名</button>
+                </form>
+            </section>
+        </main>
+
+        <hr class="divider">
+
+        <!-- 4. Footer 區塊：頁尾版權宣告與資訊 -->
+        <footer class="profile-footer">
+            <p>&copy; 2026 隨風飄搖的小葉子. All rights reserved.</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
