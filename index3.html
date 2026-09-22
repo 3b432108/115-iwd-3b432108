@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隨風飄搖的小葉子:D</title>
+    <!-- 引入 Font Awesome 圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Microsoft JhengHei, sans-serif;
+            background-color: #f7f5f0;
+            color: #3d312a;
+            min-height: 100vh;
+            /* 預留頂部固定頁籤列的高度空間 */
+            padding-top: 100px;
+            padding-bottom: 40px;
+            padding-left: 20px;
+            padding-right: 20px;
+            
+            /* 使用 Flexbox 將全頁卡片水平置中 */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* 1. 最上排固定頁籤列 (Fixed Navbar) */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(247, 245, 240, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 16px 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(61, 49, 42, 0.05);
+
+            /* Flexbox 預設：一列、水平置中、16px 間距 */
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #8c7a6b;
+            background-color: #fffcf8;
+            border: 1px solid #e8e2d8;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(61, 49, 42, 0.04);
+            transition: all 0.25s ease;
+            outline: none;
+            max-width: 200px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            color: #a47148;
+            border-color: #a47148;
+        }
+
+        .tab-btn.active {
+            background-color: #a47148;
+            color: #ffffff;
+            border-color: #a47148;
+            box-shadow: 0 6px 16px rgba(164, 113, 72, 0.2);
+        }
+
+        /* 2. 主要內容卡片容器 */
+        .main-container {
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* 核心卡片 */
+        .profile-card {
+            background-color: #fffcf8;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(61, 49, 42, 0.06);
+            border: 1px solid #e8e2d8;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        /* 個別頁面頭部樣式 */
+        .profile-header {
+            margin-bottom: 28px;
+            padding-bottom: 24px;
+            border-bottom: 1px dashed #e8e2d8;
+        }
+
+        .avatar-container {
+            margin-bottom: 16px;
+        }
+
+        .avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%; 
+            object-fit: cover;
+            border: 3px solid #8c7a6b;
+            box-shadow: 0 6px 15px rgba(61, 49, 42, 0.12);
+        }
+
+        /* Icon 替代視覺大圖 */
+        .icon-avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background-color: #f2ece4;
+            color: #a47148;
+            border: 3px solid #8c7a6b;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.2rem;
+            box-shadow: 0 6px 15px rgba(61, 49, 42, 0.12);
+        }
+
+        .name {
+            font-size: 1.8rem;
+            color: #3d312a;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .motto {
+            font-size: 0.9rem;
+            color: #8c7a6b;
+            font-style: italic;
+            position: relative;
+            display: inline-block;
+            padding: 0 10px;
+        }
+
+        .motto::before, .motto::after {
+            content: '"';
+            font-size: 1.1rem;
+            color: #a47148;
+        }
+
+        .subtitle {
+            font-size: 0.92rem;
+            color: #8c7a6b;
+        }
+
+        /* 控制頁籤內容切換 */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 文章與簡歷區塊樣式 */
+        .bio {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #5c4a3e;
+            background-color: #f2ece4;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #a47148;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        /* 社群連結列表 */
+        .social-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            list-style: none;
+        }
+
+        .social-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            background-color: #f7f5f0;
+            border: 1px solid #e2dacd;
+            border-radius: 8px;
+            color: #5c4a3e;
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+        }
+
+        .social-item i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+            margin-right: 8px;
+            color: #a47148;
+        }
+
+        .social-item:hover {
+            background-color: #8c7a6b;
+            color: #ffffff;
+        }
+
+        .social-item:hover i {
+            color: #ffffff;
+        }
+
+        /* 表單樣式 */
+        .event-form-section {
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #5c4a3e;
+            margin-bottom: 6px;
+        }
+
+        .required {
+            color: #a47148;
+            margin-left: 2px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: #3d312a;
+            background-color: #f7f5f0;
+            border: 1px solid #e2dacd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: #a47148;
+            box-shadow: 0 0 0 3px rgba(164, 113, 72, 0.15);
+            background-color: #ffffff;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background-color: #a47148;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.25s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #8c5d37;
+        }
+
+        .profile-footer {
+            font-size: 0.8rem;
+            color: #8c7a6b;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid #e8e2d8;
+        }
+
+        /* ===== Media Query：螢幕寬度小於 768px 時切換為直向堆疊 ===== */
+        @media (max-width: 768px) {
+            body {
+                /* 因選單變為垂直堆疊高度增加，增加上方留白避免擋住內容 */
+                padding-top: 210px;
+            }
+
+            .top-navbar {
+                /* 將橫向排列改為直向堆疊 */
+                flex-direction: column;
+                gap: 16px; /* 項目之間保持 16px 間距 */
+                padding: 16px 20px;
+            }
+
+            .tab-btn {
+                /* 手機版讓按鈕滿寬，更好點擊 */
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 最上排固定頁籤列（電腦版橫排，螢幕 < 768px 時改為直向堆疊，保持 16px 間距） -->
+    <nav class="top-navbar">
+        <button type="button" class="tab-btn active" onclick="switchPage('home')">首頁</button>
+        <button type="button" class="tab-btn" onclick="switchPage('about')">個人介紹頁面</button>
+        <button type="button" class="tab-btn" onclick="switchPage('form')">表單頁面</button>
+    </nav>
+
+    <!-- 下方主要內容區 -->
+    <div class="main-container">
+        <main class="profile-card">
+            
+            <!-- 1. 首頁頁籤內容 -->
+            <section id="home" class="tab-content active">
+                <header class="profile-header">
+                    <div class="avatar-container">
+                        <div class="icon-avatar">
+                            <i class="fa-solid fa-compass"></i>
+                        </div>
+                    </div>
+                    <h1 class="name">探索與分享</h1>
+                    <p class="subtitle">Welcome to My Personal Website</p>
+                </header>
+
+                <article class="bio">
+                    <p><strong>歡迎來到我的個人網站！</strong></p>
+                    <p style="margin-top: 8px;">這裡是我紀錄創作、交流與生活美學的小天地。你可以透過最上方的頁籤切換：</p>
+                    <ul style="margin-left: 20px; margin-top: 8px; line-height: 1.8;">
+                        <li><strong>個人介紹頁面：</strong>深入了解我的背景與社群聯繫方式。</li>
+                        <li><strong>表單頁面：</strong>線上報名近期舉辦的工作坊與分享會。</li>
+                    </ul>
+                </article>
+            </section>
+
+            <!-- 2. 個人介紹頁籤內容 -->
+            <section id="about" class="tab-content">
+                <header class="profile-header">
+                    <div class="avatar-container">
+                        <img class="avatar" src="photo1.jpg" alt="個人大頭貼">
+                    </div>
+                    <h1 class="name">隨風飄搖的小葉子</h1>
+                    <p class="motto">擁抱自然的節奏，在平淡生活中發現微小的美好。</p>
+                </header>
+
+                <article class="bio">
+                    <p>這裡是隨風飄搖的小葉子！目前是一名網頁視覺設計師，喜歡運用簡單、質樸的設計語言將想法實現。平時熱衷於閱讀、攝影與網頁開發以及品嚐手沖咖啡:D</p>
+                </article>
+
+                <nav aria-label="社群媒體連結">
+                    <ul class="social-links">
+                        <li>
+                            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" class="social-item">
+                                <i class="fa-brands fa-instagram"></i>
+                                <span>@duan_xuan_biu</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://line.me/" target="_blank" rel="noopener noreferrer" class="social-item">
+                                <i class="fa-brands fa-line"></i>
+                                <span>ID：duanxuan</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </section>
+
+            <!-- 3. 表單頁籤內容 -->
+            <section id="form" class="tab-content">
+                <header class="profile-header">
+                    <div class="avatar-container">
+                        <div class="icon-avatar">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </div>
+                    </div>
+                    <h1 class="name">活動線上報名</h1>
+                    <p class="subtitle">請填寫以下資訊，成功報名後將以 Email 寄發確認信</p>
+                </header>
+
+                <div class="event-form-section">
+                    <form action="#" method="POST">
+                        <div class="form-group">
+                            <label for="userName">姓名<span class="required">*</span></label>
+                            <input type="text" id="userName" name="userName" class="form-control" placeholder="請輸入您的姓名" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userEmail">Email<span class="required">*</span></label>
+                            <input type="email" id="userEmail" name="userEmail" class="form-control" placeholder="example@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="eventSession">報名場次</label>
+                            <select id="eventSession" name="eventSession" class="form-control">
+                                <option value="" disabled selected>請選擇想參加的場次</option>
+                                <option value="session-1">場次 A：大地色系網頁視覺設計分享</option>
+                                <option value="session-2">場次 B：手沖咖啡與生活美學工作坊</option>
+                                <option value="session-3">場次 C：個人品牌質感建立實戰</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="submit-btn">送出報名</button>
+                    </form>
+                </div>
+            </section>
+
+            <footer class="profile-footer">
+                <p>&copy; 2026 王小明. All rights reserved.</p>
+            </footer>
+
+        </main>
+    </div>
+
+    <!-- 頁籤切換邏輯 -->
+    <script>
+        function switchPage(pageId) {
+            // 隱藏所有頁籤內容
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            // 移除所有按鈕的點亮狀態
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // 顯示對應內容
+            document.getElementById(pageId).classList.add('active');
+
+            // 點亮當前點擊的頁籤按鈕
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+
+</body>
+</html>
