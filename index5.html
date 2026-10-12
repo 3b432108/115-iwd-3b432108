@@ -1,959 +1,1379 @@
 <!DOCTYPE html>
-<html lang="zh-TW" class="h-full bg-stone-50">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maison de Pâtisserie - 蛋糕預訂與取貨系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Café Lumière | 線上手機預訂與店員管理</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- QR Code Generator -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts: Noto Serif TC & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        cream: '#FAF6F0',
-                        warmSand: '#F3E9DC',
-                        terracotta: '#C86D51',
-                        terracottaDark: '#A85238',
-                        espresso: '#2C221E',
-                        espressoLight: '#4A3B32',
+                        cream: {
+                            50: '#FDFBF7',
+                            100: '#F7F3E9',
+                            200: '#EFE7D5',
+                            300: '#E0D2B4',
+                        },
+                        espresso: {
+                            400: '#8C6D58',
+                            600: '#5C4033',
+                            800: '#3D2B1F',
+                            900: '#2A1C13',
+                        },
+                        amber: {
+                            500: '#D97706',
+                            600: '#B45309',
+                        },
+                        terracotta: '#C86D51'
                     },
                     fontFamily: {
-                        sans: ['Inter', 'PingFang TC', 'Microsoft JhengHei', 'sans-serif'],
+                        serif: ['"Noto Serif TC"', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
     <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #F7F3E9;
+            color: #2A1C13;
+            -webkit-tap-highlight-color: transparent;
         }
-        .animate-fade-in { animation: fadeIn 0.25s ease-out forwards; }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 </head>
-<body class="h-full text-espresso font-sans antialiased selection:bg-terracotta selection:text-white pb-52 sm:pb-56">
+<body x-data="cafeApp()" x-init="initApp()" class="min-h-screen pb-24 max-w-md md:max-w-5xl mx-auto bg-cream-100 shadow-2xl relative border-x border-cream-200 transition-all duration-300">
 
-    <!-- 頁頭與品牌 Header -->
-    <header class="sticky top-0 z-30 bg-cream/90 backdrop-blur-md border-b border-warmSand/60 shadow-sm transition-all">
-        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-terracotta flex items-center justify-center text-white shadow-sm">
-                    <i data-lucide="cake" class="w-5 h-5"></i>
+    <!-- 頂部 Header -->
+    <header class="sticky top-0 z-30 bg-cream-50/90 backdrop-blur-md border-b border-cream-200 px-5 py-4 transition-all duration-200">
+        <div class="flex items-center justify-between max-w-5xl mx-auto">
+            <div class="flex items-center gap-3 cursor-pointer" @click="currentTab = 'menu'">
+                <div class="w-10 h-10 rounded-full bg-espresso-800 flex items-center justify-center text-cream-100 shadow-md">
+                    <i data-lucide="coffee" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base leading-tight tracking-wide text-espresso">Maison Pâtisserie</h1>
-                    <p class="text-xs text-espresso/60">法式手作蛋糕預訂與取貨</p>
+                    <h1 class="font-serif font-bold text-lg text-espresso-900 leading-tight">Café Lumière</h1>
+                    <p class="text-xs text-espresso-600 flex items-center gap-1">
+                        <i data-lucide="map-pin" class="w-3 h-3 text-terracotta"></i> 台北市大安區敦化南路
+                    </p>
                 </div>
             </div>
             
-            <!-- 購物車快捷鈕 -->
-            <button onclick="toggleCartDrawer(true)" class="relative p-2 rounded-full hover:bg-warmSand/50 transition text-espresso">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                <span id="cart-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-terracotta text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-cream scale-90">0</span>
-            </button>
+            <!-- 右上角按鈕：切換店員後台與歷史訂單 -->
+            <div class="flex items-center gap-2">
+                <button @click="currentTab = (currentTab === 'admin' ? 'menu' : 'admin'); $nextTick(() => lucide.createIcons());" 
+                        :class="currentTab === 'admin' ? 'bg-amber-600 text-white' : 'bg-cream-200 text-espresso-800 hover:bg-cream-300'"
+                        class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                    <i data-lucide="user-cog" class="w-4 h-4"></i>
+                    <span x-text="currentTab === 'admin' ? '顧客菜單' : '店員後台'"></span>
+                </button>
+                <button @click="viewOrderReceipt && currentTab !== 'receipt' ? currentTab = 'receipt' : null" 
+                        x-show="viewOrderReceipt" 
+                        class="relative p-2 rounded-full bg-cream-200 text-espresso-800 hover:bg-cream-300 transition">
+                    <i data-lucide="receipt" class="w-5 h-5"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-terracotta rounded-full border-2 border-white"></span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-md mx-auto px-4 pt-4 pb-20">
+    <!-- 主介面切換 (菜單頁 / 結帳頁 / 憑證頁) -->
+    <main class="p-4 md:p-6">
+        
+        <!-- ==================== 頁面 1: 菜單瀏覽頁 ==================== -->
+        <div x-show="currentTab === 'menu'" class="space-y-6">
+            
+            <!-- 公告 Banner -->
+            <div class="bg-gradient-to-r from-espresso-800 to-espresso-600 text-cream-50 p-4 md:p-6 rounded-2xl shadow-lg relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="bg-terracotta/90 text-white text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">預訂溫馨提醒</span>
+                    <h2 class="font-serif font-bold text-base md:text-xl mb-1">整塊蛋糕需提前 3 天預訂</h2>
+                    <p class="text-xs md:text-sm text-cream-200 opacity-90 leading-relaxed">現場當日僅提供切片甜點與現做輕食，整塊蛋糕每日限量手工新鮮現做。</p>
+                </div>
+                <i data-lucide="cake" class="absolute -right-4 -bottom-4 w-28 md:w-36 h-28 md:h-36 text-white/10 rotate-12"></i>
+            </div>
 
-        <!-- 步驟進度條 -->
-        <div class="mb-6 bg-white rounded-2xl p-3 shadow-sm border border-warmSand/40">
-            <div class="flex items-center justify-between text-xs font-medium">
-                <div id="step-tab-1" class="flex-1 text-center text-terracotta font-bold flex flex-col items-center">
-                    <span class="w-6 h-6 rounded-full bg-terracotta text-white flex items-center justify-center mb-1 text-xs">1</span>
-                    <span>1. 挑選蛋糕</span>
-                </div>
-                <div class="w-8 border-t border-gray-200 mb-4"></div>
-                <div id="step-tab-2" class="flex-1 text-center text-gray-400 flex flex-col items-center">
-                    <span class="w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center mb-1 text-xs">2</span>
-                    <span>2. 時間與客製</span>
-                </div>
-                <div class="w-8 border-t border-gray-200 mb-4"></div>
-                <div id="step-tab-3" class="flex-1 text-center text-gray-400 flex flex-col items-center">
-                    <span class="w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center mb-1 text-xs">3</span>
-                    <span>3. 確認與憑證</span>
-                </div>
+            <!-- 分類頁籤 Navigation -->
+            <nav class="flex space-x-2 border-b border-cream-200 pb-2 overflow-x-auto hide-scrollbar">
+                <template x-for="cat in categories" :key="cat.id">
+                    <button @click="activeCategory = cat.id"
+                            :class="activeCategory === cat.id ? 'bg-espresso-800 text-cream-50 shadow-md scale-105' : 'bg-cream-200/70 text-espresso-600 hover:bg-cream-200'"
+                            class="px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5">
+                        <i :data-lucide="cat.icon" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                        <span x-text="cat.name"></span>
+                    </button>
+                </template>
+            </nav>
+
+            <!-- 菜單列表 Menu Grid: 手機 1 列、桌面 3 列，直式長方形卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4.5">
+                <template x-for="item in filteredProducts" :key="item.id">
+                    <div @click="openProductModal(item)" 
+                         class="bg-white rounded-2xl shadow-sm border border-cream-200/80 overflow-hidden hover:shadow-md transition cursor-pointer flex flex-col justify-between group">
+                        
+                        <!-- 照片在上方 -->
+                        <div class="relative w-full h-48 bg-cream-100 overflow-hidden">
+                            <img :src="item.image" :alt="item.name" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            <span x-show="item.isWholeCake" class="absolute top-2.5 right-2.5 bg-amber-500/90 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm">需預訂</span>
+                        </div>
+
+                        <!-- 名稱、簡介、起價與按鈕在圖片下方 -->
+                        <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                            <div>
+                                <h3 class="font-bold text-base text-espresso-900 leading-tight mb-1.5" x-text="item.name"></h3>
+                                <!-- 介紹限制最多顯示兩行 -->
+                                <p class="text-xs text-espresso-600/80 line-clamp-2 leading-relaxed" x-text="item.description"></p>
+                            </div>
+                            
+                            <div class="pt-3 border-t border-cream-100 flex items-center justify-between mt-auto">
+                                <div>
+                                    <span class="text-[10px] text-espresso-600 block">起價</span>
+                                    <span class="font-bold text-espresso-900 text-sm">
+                                        NT$ <span x-text="item.isWholeCake ? item.basePrice : item.price"></span> <span class="text-xs font-normal text-espresso-600">起</span>
+                                    </span>
+                                </div>
+                                
+                                <!-- 選擇規格 / 詳細內容按鈕 -->
+                                <button @click.stop="openProductModal(item)" 
+                                        class="px-3.5 py-2 rounded-xl bg-espresso-800 hover:bg-espresso-900 text-cream-50 font-semibold text-xs transition flex items-center gap-1 shadow-sm active:scale-95">
+                                    <span x-text="item.isWholeCake ? '選擇規格' : '詳細內容'"></span>
+                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
 
-        <!-- 步驟 1：商品目錄與選購 -->
-        <section id="step-1" class="animate-fade-in space-y-5 pb-6">
-            <!-- 分類標籤 -->
-            <div class="flex space-x-2 overflow-x-auto no-scrollbar py-1">
-                <button onclick="filterCategory('all')" class="cat-btn active px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap bg-espresso text-white transition shadow-sm" data-cat="all">全部蛋糕</button>
-                <button onclick="filterCategory('whole')" class="cat-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap bg-white text-espresso/70 hover:bg-warmSand transition border border-warmSand/60" data-cat="whole">整模慶生蛋糕</button>
-                <button onclick="filterCategory('slice')" class="cat-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap bg-white text-espresso/70 hover:bg-warmSand transition border border-warmSand/60" data-cat="slice">切片與小甜點</button>
-                <button onclick="filterCategory('seasonal')" class="cat-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap bg-white text-espresso/70 hover:bg-warmSand transition border border-warmSand/60" data-cat="seasonal">⭐ 季節限定</button>
+        <!-- ==================== 頁面 2: 填寫資料與結帳頁 ==================== -->
+        <div x-show="currentTab === 'checkout'" class="space-y-5">
+            <!-- 頁面頂部導航與回上一頁按鈕 -->
+            <div class="flex items-center justify-between border-b border-cream-200 pb-3">
+                <button @click="currentTab = 'menu'" 
+                        class="px-3 py-2 rounded-xl bg-cream-200 hover:bg-cream-300 text-espresso-800 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>回上一頁 (返回菜單)</span>
+                </button>
+                <h2 class="font-serif font-bold text-base md:text-lg text-espresso-900">確認預訂內容與取貨細節</h2>
             </div>
 
-            <!-- 預訂提醒 Notice -->
-            <div class="bg-warmSand/40 border-l-4 border-terracotta p-3 rounded-r-xl text-xs text-espressoLight flex items-start space-x-2">
-                <i data-lucide="info" class="w-4 h-4 text-terracotta shrink-0 mt-0.5"></i>
-                <div>
-                    <span class="font-bold">預訂提示：</span>蛋糕均為新鮮現做，請提前 <span class="text-terracotta font-bold">至少 2 天</span> 預訂。選購完畢後於下一步選擇完整客製化配件！
-                </div>
-            </div>
-
-            <!-- 蛋糕列表卡片容器 -->
-            <div id="cake-list" class="grid grid-cols-1 gap-4">
-                <!-- JS 動態渲染卡片 -->
-            </div>
-        </section>
-
-        <!-- 步驟 2：取貨時間與詳細客製化資訊 -->
-        <section id="step-2" class="hidden animate-fade-in space-y-5 pb-6">
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-warmSand/50 space-y-4">
-                <h2 class="font-bold text-base text-espresso flex items-center space-x-2 border-b border-gray-100 pb-3">
-                    <i data-lucide="calendar-check" class="w-5 h-5 text-terracotta"></i>
-                    <span>取貨日期與時間預約</span>
-                </h2>
-
-                <div>
-                    <label class="block text-xs font-bold text-espresso mb-1">取貨日期 <span class="text-red-500">*</span></label>
-                    <input type="date" id="pickup-date" onchange="validatePickupSchedule()" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                    <p id="date-hint" class="text-[11px] text-terracotta font-medium mt-1">※ 最快取貨日為 2 天後（新鮮現做）</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-espresso mb-1">預計取貨時段 <span class="text-red-500">*</span></label>
-                    <div id="time-slots" class="grid grid-cols-2 gap-2">
-                        <!-- 動態生成時間按鈕 -->
-                    </div>
-                    <input type="hidden" id="selected-time">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-espresso mb-1">取貨方式 <span class="text-red-500">*</span></label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="flex items-center justify-between p-3 border rounded-xl cursor-pointer bg-stone-50 hover:bg-warmSand/20 border-gray-200 text-xs">
-                            <span class="flex items-center space-x-2">
-                                <input type="radio" name="pickup-method" value="in-store" checked onchange="toggleDeliveryInfo(false)" class="text-terracotta focus:ring-terracotta">
-                                <span class="font-medium">門市自取</span>
-                            </span>
-                            <i data-lucide="store" class="w-4 h-4 text-gray-400"></i>
-                        </label>
-                        <label class="flex items-center justify-between p-3 border rounded-xl cursor-pointer bg-stone-50 hover:bg-warmSand/20 border-gray-200 text-xs">
-                            <span class="flex items-center space-x-2">
-                                <input type="radio" name="pickup-method" value="courier" onchange="toggleDeliveryInfo(true)" class="text-terracotta focus:ring-terracotta">
-                                <span class="font-medium">代叫計程車/快遞</span>
-                            </span>
-                            <i data-lucide="car" class="w-4 h-4 text-gray-400"></i>
-                        </label>
+            <!-- 取貨時間選擇區 (核心防呆) -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-cream-200 space-y-4">
+                <div class="flex items-center gap-2 border-b border-cream-100 pb-3">
+                    <i data-lucide="clock" class="w-5 h-5 text-terracotta"></i>
+                    <div>
+                        <h3 class="font-bold text-sm text-espresso-900">選擇取貨時間</h3>
+                        <p class="text-[11px] text-espresso-600">請確認您的到店時間，我們將提前為您準備</p>
                     </div>
                 </div>
 
-                <div id="courier-note" class="hidden bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-xl flex items-start space-x-2">
-                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
-                    <div>運費採「到付」由司機收取，門市會協助妥善包裝並拍照留存後交付司機。</div>
+                <div x-show="cartHasWholeCake" class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex gap-2.5 items-start">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-xs text-amber-900 font-medium leading-tight">
+                        您的購物車包含<span class="font-bold text-amber-600">「整塊慶生蛋糕」</span>，最快可取貨日為 <span x-text="minPickupDateFormatted" class="font-bold"></span>。
+                    </p>
                 </div>
-            </div>
-
-            <!-- 客製化配件與保冷選擇 -->
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-warmSand/50 space-y-4">
-                <h2 class="font-bold text-base text-espresso flex items-center space-x-2 border-b border-gray-100 pb-3">
-                    <i data-lucide="sliders" class="w-5 h-5 text-terracotta"></i>
-                    <span>切片、餐具、蠟燭與客製牌</span>
-                </h2>
-
-                <!-- 預先切片 -->
-                <div>
-                    <label class="block text-xs font-bold text-espresso mb-1">是否預先切片 <span class="text-red-500">*</span></label>
-                    <select id="slice-option" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                        <option value="none">不切片 (保持完整造型)</option>
-                        <option value="slice-6">預先切 6 等份</option>
-                        <option value="slice-8">預先切 8 等份</option>
-                    </select>
-                </div>
-
-                <!-- 免費餐具組 -->
-                <div>
-                    <label class="block text-xs font-bold text-espresso mb-1">餐具盤叉組 (免費附贈) <span class="text-red-500">*</span></label>
-                    <select id="cutlery-option" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                        <option value="0">不需要餐具</option>
-                        <option value="1" selected>1 組 (5人份，附切刀1把)</option>
-                        <option value="2">2 組 (10人份，附切刀1把)</option>
-                        <option value="3">3 組 (15人份，附切刀1把)</option>
-                        <option value="4">4 組 (20人份，附切刀1把)</option>
-                    </select>
-                </div>
-
-                <!-- 蠟燭選擇 -->
-                <div>
-                    <label class="block text-xs font-bold text-espresso mb-1">慶生蠟燭 (免費附贈) <span class="text-red-500">*</span></label>
-                    <select id="candle-option" onchange="handleCandleChange()" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                        <option value="none">不需要蠟燭</option>
-                        <option value="single">單支美式彩色蠟燭</option>
-                        <option value="question">問號蠟燭</option>
-                        <option value="numbers">數字蠟燭 (可輸入數字)</option>
-                    </select>
-                    <!-- 動態展開數字輸入框 -->
-                    <div id="candle-num-box" class="hidden mt-2">
-                        <input type="text" id="candle-num-input" maxlength="3" placeholder="請輸入數字 (例如：18、28)" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                    </div>
-                </div>
-
-                <!-- 巧克力牌手寫字 -->
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="block text-xs font-bold text-espresso">巧克力牌手寫字 (+NT$ 30)</label>
-                        <span class="text-[10px] text-gray-400">限 12 字以內</span>
-                    </div>
-                    <input type="text" id="piping-text-input" maxlength="12" oninput="updateCalculatedPrices()" placeholder="例：Happy Birthday Amy!" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                </div>
-
-                <!-- 保冷需求 -->
-                <div>
-                    <label class="block text-xs font-bold text-espresso mb-1">預計車程 / 保冷需求 <span class="text-red-500">*</span></label>
-                    <select id="icepack-option" onchange="updateCalculatedPrices()" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                        <option value="0">30 分鐘內 (基礎保冷包裝, +NT$ 0)</option>
-                        <option value="20">30 ~ 60 分鐘 (加購保冷劑, +NT$ 20)</option>
-                        <option value="60">超過 1 小時 (強烈建議自備保冷袋/保冷箱, +NT$ 0)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- 訂購人聯絡資訊 -->
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-warmSand/50 space-y-4">
-                <h2 class="font-bold text-base text-espresso flex items-center space-x-2 border-b border-gray-100 pb-3">
-                    <i data-lucide="user" class="w-5 h-5 text-terracotta"></i>
-                    <span>訂購人聯絡資料</span>
-                </h2>
 
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-xs font-bold text-espresso mb-1">訂購人姓名 <span class="text-red-500">*</span></label>
-                        <input type="text" id="cust-name" placeholder="請輸入姓名" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
+                        <label class="block text-xs font-semibold text-espresso-800 mb-1">取貨日期 <span class="text-red-500">*</span></label>
+                        <input type="date" x-model="orderForm.pickupDate" :min="minPickupDate" @change="validateDate" 
+                               class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2.5 text-xs text-espresso-900 focus:outline-none focus:ring-2 focus:ring-espresso-600">
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-espresso mb-1">行動電話 <span class="text-red-500">*</span> (現場取貨核對使用)</label>
-                        <input type="tel" id="cust-phone" placeholder="例如：0912345678" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-espresso mb-1">電子信箱 (收取訂單確認信)</label>
-                        <input type="email" id="cust-email" placeholder="example@email.com" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-espresso mb-1">過敏原或特殊備註需求</label>
-                        <textarea id="cust-notes" rows="3" placeholder="例：堅果過敏 / 門市取貨時順便預約內用座位" class="w-full bg-stone-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/50"></textarea>
+                        <label class="block text-xs font-semibold text-espresso-800 mb-1">取貨時段 <span class="text-red-500">*</span></label>
+                        <select x-model="orderForm.pickupTime" 
+                                class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2.5 text-xs text-espresso-900 focus:outline-none focus:ring-2 focus:ring-espresso-600">
+                            <option value="" disabled>請選擇取貨時間段</option>
+                            <template x-for="time in availableTimeSlots" :key="time">
+                                <option :value="time" x-text="time"></option>
+                            </template>
+                        </select>
                     </div>
                 </div>
-                <!-- 底部防遮擋留白緩衝區 -->
-                <div class="h-16"></div>
             </div>
-        </section>
 
-        <!-- 步驟 3：訂單檢視與付款方式 -->
-        <section id="step-3" class="hidden animate-fade-in space-y-5 pb-6">
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-warmSand/50 space-y-4">
-                <h2 class="font-bold text-base text-espresso flex items-center justify-between border-b border-gray-100 pb-3">
-                <div class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-1 shadow-sm">
+            <!-- 個人聯絡資訊 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-cream-200 space-y-4">
+                <div class="flex items-center gap-2 border-b border-cream-100 pb-3">
+                    <i data-lucide="user" class="w-5 h-5 text-terracotta"></i>
+                    <h3 class="font-bold text-sm text-espresso-900">訂購人聯絡資訊</h3>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-espresso-800 mb-1">訂購人姓名 <span class="text-red-500">*</span></label>
+                        <input type="text" x-model="orderForm.name" placeholder="請輸入姓名 (如：林先生/小姐)" 
+                               class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2.5 text-xs text-espresso-900 focus:outline-none focus:ring-2 focus:ring-espresso-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-espresso-800 mb-1">行動電話 (簡訊/取貨通知) <span class="text-red-500">*</span></label>
+                        <input type="tel" x-model="orderForm.phone" placeholder="0912345678" maxlength="10"
+                               class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2.5 text-xs text-espresso-900 focus:outline-none focus:ring-2 focus:ring-espresso-600">
+                        <p x-show="orderForm.phone && !isPhoneValid" class="text-[10px] text-red-500 mt-1">請輸入正確的 10 位數台灣手機號碼</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-espresso-800 mb-1">統一編號 / 抬頭 (選填)</label>
+                        <input type="text" x-model="orderForm.taxId" placeholder="若需開立統編請填寫" 
+                               class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2.5 text-xs text-espresso-900 focus:outline-none focus:ring-2 focus:ring-espresso-600">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 付款管道選擇 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-cream-200 space-y-3">
+                <div class="flex items-center gap-2 border-b border-cream-100 pb-3">
+                    <i data-lucide="credit-card" class="w-5 h-5 text-terracotta"></i>
+                    <h3 class="font-bold text-sm text-espresso-900">選擇付款方式</h3>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <label class="border rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition text-center"
+                           :class="orderForm.paymentMethod === 'linepay' ? 'border-espresso-800 bg-cream-100 text-espresso-900 font-bold' : 'border-cream-200 text-espresso-600'">
+                        <input type="radio" x-model="orderForm.paymentMethod" value="linepay" class="hidden">
+                        <i data-lucide="wallet" class="w-5 h-5 text-green-600"></i>
+                        <span class="text-[11px]">LINE Pay</span>
+                    </label>
+
+                    <label class="border rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition text-center"
+                           :class="orderForm.paymentMethod === 'credit' ? 'border-espresso-800 bg-cream-100 text-espresso-900 font-bold' : 'border-cream-200 text-espresso-600'">
+                        <input type="radio" x-model="orderForm.paymentMethod" value="credit" class="hidden">
+                        <i data-lucide="credit-card" class="w-5 h-5 text-blue-600"></i>
+                        <span class="text-[11px]">線上刷卡</span>
+                    </label>
+
+                    <label class="border rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition text-center"
+                           :class="orderForm.paymentMethod === 'store' ? 'border-espresso-800 bg-cream-100 text-espresso-900 font-bold' : 'border-cream-200 text-espresso-600'">
+                        <input type="radio" x-model="orderForm.paymentMethod" value="store" class="hidden">
+                        <i data-lucide="store" class="w-5 h-5 text-espresso-800"></i>
+                        <span class="text-[11px]">現場付款</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 購物車明細確認（含新增、修改、刪除功能） -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-cream-200 space-y-3">
+                <div class="flex justify-between items-center border-b border-cream-100 pb-2">
+                    <h3 class="font-bold text-sm text-espresso-900">餐點明細確認</h3>
+                    <div class="flex items-center gap-2">
+                        <!-- 新增餐點按鈕 -->
+                        <button @click="currentTab = 'menu'" class="text-xs bg-cream-200 hover:bg-cream-300 text-espresso-800 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 transition">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-terracotta"></i>
+                            <span>+ 新增其他餐點</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="divide-y divide-cream-100">
+                    <template x-for="(cartItem, index) in cart" :key="index">
+                        <div class="py-3 space-y-2">
+                            <!-- 餐點標題與修改/刪除操作按鈕 -->
+                            <div class="flex justify-between items-start">
+                                <p class="font-bold text-espresso-900 text-xs" x-text="cartItem.name"></p>
+                                <div class="flex items-center gap-1.5">
+                                    <!-- 修改按鈕 -->
+                                    <button @click="editCartItem(index)" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-[11px] font-bold flex items-center gap-1 border border-amber-200/60 transition">
+                                        <i data-lucide="pencil" class="w-3 h-3"></i>
+                                        <span>修改規格</span>
+                                    </button>
+                                    <!-- 刪除按鈕 -->
+                                    <button @click="removeFromCart(index)" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[11px] font-bold flex items-center gap-1 border border-red-200/60 transition">
+                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                        <span>刪除</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 規格明細 display -->
+                            <template x-if="cartItem.isWholeCake">
+                                <div class="text-[11px] text-espresso-600 space-y-0.5 bg-cream-50 p-2 rounded-lg border border-cream-200/50">
+                                    <p>尺寸：<span x-text="cartItem.options.size"></span></p>
+                                    <p>蠟燭：<span x-text="cartItem.options.candle"></span> <span x-show="cartItem.options.candleNum" x-text="'(' + cartItem.options.candleNum + ')'"></span></p>
+                                    <p>盤叉：<span x-text="cartItem.options.forks"></span></p>
+                                    <p>巧克力牌提字：<span class="font-semibold text-terracotta" x-text="cartItem.options.cardText || '無'"></span></p>
+                                    <p x-show="cartItem.options.note">備註：<span x-text="cartItem.options.note"></span></p>
+                                </div>
+                            </template>
+                            <template x-if="cartItem.isDrink">
+                                <div class="text-[11px] text-espresso-600 space-y-0.5 bg-cream-50 p-2 rounded-lg border border-cream-200/50">
+                                    <p>規格：<span class="font-semibold text-espresso-800" x-text="cartItem.options.temp + ' / ' + cartItem.options.sweetness"></span></p>
+                                    <p x-show="cartItem.options.note">備註：<span x-text="cartItem.options.note"></span></p>
+                                </div>
+                            </template>
+                            <p x-show="!cartItem.isWholeCake && !cartItem.isDrink && cartItem.options.note" class="text-[11px] text-espresso-600 bg-cream-50 p-2 rounded-lg">備註：<span x-text="cartItem.options.note"></span></p>
+
+                            <!-- 數量增減與小計 -->
+                            <div class="flex justify-between items-center pt-1">
+                                <div class="flex items-center border border-cream-300 rounded-lg overflow-hidden bg-cream-50">
+                                    <button @click="updateCartQty(index, -1)" class="px-2.5 py-0.5 text-espresso-800 font-bold hover:bg-cream-200">-</button>
+                                    <span class="px-3 text-xs font-bold text-espresso-900" x-text="cartItem.qty"></span>
+                                    <button @click="updateCartQty(index, 1)" class="px-2.5 py-0.5 text-espresso-800 font-bold hover:bg-cream-200">+</button>
+                                </div>
+                                <span class="font-bold text-espresso-900 text-xs" x-text="'NT$ ' + (cartItem.price * cartItem.qty)"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <div x-show="cart.length === 0" class="text-center py-6 text-espresso-600 text-xs">
+                    <p class="mb-2">您的購物車目前是空的</p>
+                    <button @click="currentTab = 'menu'" class="px-4 py-2 bg-espresso-800 text-cream-50 rounded-xl font-bold text-xs">
+                        Go To Menu / 前往選購
+                    </button>
+                </div>
+
+                <div x-show="cart.length > 0" class="border-t border-cream-200 pt-3 flex justify-between items-center text-sm font-bold text-espresso-900">
+                    <span>訂單總金額</span>
+                    <span class="text-base text-terracotta" x-text="'NT$ ' + cartTotal"></span>
+                </div>
+            </div>
+
+            <!-- 送出訂單按鈕 -->
+            <button @click="submitOrder" 
+                    :disabled="!isFormValid"
+                    :class="isFormValid ? 'bg-espresso-800 hover:bg-espresso-900 text-cream-50 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+                    class="w-full py-3.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>送出預訂單並產生取貨單</span>
+            </button>
+        </div>
+
+        <!-- ==================== 頁面 3: 完成訂單憑證頁 (Receipt Card) ==================== -->
+        <div x-show="currentTab === 'receipt'" class="space-y-5">
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
                     <i data-lucide="check" class="w-6 h-6"></i>
                 </div>
-                <h2 class="font-bold text-base text-green-900">預訂成功！訂單已建立</h2>
-                <p class="text-xs text-green-700">請於約定取貨時間出示下方電子憑證供現場核對</p>
+                <h2 class="font-serif font-bold text-xl text-espresso-900">預訂成功！店員已收到通知</h2>
+                <p class="text-xs text-espresso-600">請於指定取貨時間出示此畫面給店家核銷</p>
             </div>
 
-            <!-- 模擬票券/電子憑證卡片 -->
-            <div class="bg-white rounded-2xl shadow-md border border-warmSand/60 overflow-hidden relative">
-                <div class="bg-espresso text-white p-4 flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] text-warmSand/70 uppercase tracking-widest font-mono">RESERVATION TICKET</p>
-                        <h3 id="res-order-id" class="font-mono font-bold text-base text-warmSand">#ORD-882910</h3>
+            <div class="bg-white rounded-3xl p-5 shadow-xl border border-cream-300 relative overflow-hidden space-y-4">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-espresso-800 via-amber-600 to-terracotta"></div>
+                
+                <div class="text-center pb-4 border-b border-dashed border-cream-300">
+                    <span class="text-[11px] font-bold text-espresso-600 uppercase tracking-widest">取貨號碼</span>
+                    <div class="text-3xl font-extrabold text-espresso-900 my-1 tracking-wider" x-text="completedOrder.orderNum"></div>
+                    
+                    <div class="w-32 h-32 mx-auto my-2.5 bg-cream-50 p-2 border border-cream-200 rounded-2xl flex items-center justify-center shadow-inner">
+                        <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + completedOrder.orderNum" alt="QR Code" class="w-full h-full rounded-lg">
                     </div>
-                    <span class="bg-terracotta/90 text-white text-[11px] px-2.5 py-1 rounded-full font-bold">已確認預約</span>
+                    <p class="text-[10px] text-espresso-600">店員後台可對應此單號進度</p>
                 </div>
 
-                <!-- 二維碼產製區 -->
-                <div class="p-5 flex flex-col items-center justify-center border-b border-dashed border-gray-200 bg-stone-50">
-                    <div id="qrcode" class="p-3 bg-white border border-gray-200 rounded-xl shadow-inner"></div>
-                    <p class="text-[11px] text-gray-500 mt-2 font-medium">現場取貨時出示此 QR Code 掃描</p>
-                </div>
-
-                <!-- 票券詳細資訊 -->
-                <div class="p-5 space-y-3 text-xs">
-                    <div class="grid grid-cols-2 gap-3 pb-3 border-b border-gray-100">
-                        <div>
-                            <span class="text-gray-400 block text-[11px]">取貨時間</span>
-                            <span id="res-pickup-time" class="font-bold text-terracotta text-sm">2026/10/08 13:00-15:00</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-400 block text-[11px]">訂購人姓名</span>
-                            <span id="res-cust-name" class="font-bold text-espresso text-sm">陳小明</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-400 block text-[11px]">行動電話</span>
-                            <span id="res-cust-phone" class="font-medium text-espresso">0912345678</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-400 block text-[11px]">現場應付總額</span>
-                            <span id="res-total-price" class="font-bold text-terracotta text-sm">NT$ 910</span>
-                        </div>
+                <div class="bg-cream-100/70 p-3 rounded-xl space-y-1.5 text-xs">
+                    <div class="flex justify-between">
+                        <span class="text-espresso-600">預訂人：</span>
+                        <span class="font-bold text-espresso-900" x-text="completedOrder.name + ' (' + completedOrder.phone + ')'"></span>
                     </div>
-
-                    <!-- 客製細節摘要 -->
-                    <div>
-                        <h4 class="font-bold text-espresso mb-1">客製配件細節：</h4>
-                        <ul id="res-custom-details" class="space-y-1 text-gray-600 bg-stone-50 p-3 rounded-xl border border-stone-100">
-                            <!-- JS 動態填入 -->
-                        </ul>
+                    <div class="flex justify-between">
+                        <span class="text-espresso-600">預計取貨時間：</span>
+                        <span class="font-bold text-terracotta" x-text="completedOrder.pickupDate + ' ' + completedOrder.pickupTime"></span>
                     </div>
-
-                    <!-- 訂購商品清單 -->
-                    <div>
-                        <h4 class="font-bold text-espresso mb-1">訂購品項：</h4>
-                        <div id="res-items-list" class="divide-y divide-gray-100">
-                            <!-- JS 動態填入 -->
-                        </div>
-                    </div>
-
-                    <div id="res-notes-container" class="hidden pt-2 border-t border-gray-100">
-                        <span class="text-gray-400 block text-[11px]">過敏原 / 特殊備註：</span>
-                        <p id="res-notes" class="text-gray-700 italic text-[11px] bg-amber-50/50 p-2 rounded-lg mt-0.5 border border-amber-100"></p>
+                    <div class="flex justify-between">
+                        <span class="text-espresso-600">付款狀態：</span>
+                        <span class="font-bold text-green-700" x-text="completedOrder.paymentMethod === 'store' ? '現場付款' : '已線上完成付款'"></span>
                     </div>
                 </div>
 
-                <!-- 按鈕功能區 -->
-                <div class="p-4 bg-stone-50 border-t border-gray-100 flex space-x-2">
-                    <button onclick="copyOrderDetails()" class="flex-1 py-2.5 border border-gray-300 bg-white rounded-xl text-xs font-bold text-gray-700 hover:bg-stone-100 transition flex items-center justify-center space-x-1">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                        <span>複製文字明細</span>
-                    </button>
-                    <button onclick="resetOrder()" class="flex-1 py-2.5 bg-espresso text-white rounded-xl text-xs font-bold hover:bg-espressoLight transition flex items-center justify-center space-x-1">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                        <span>再預訂下一筆</span>
-                    </button>
+                <div class="space-y-2">
+                    <h4 class="font-bold text-xs text-espresso-800 border-b border-cream-200 pb-1">餐點備料與規格細節：</h4>
+                    <div class="space-y-2 text-xs">
+                        <template x-for="(item, idx) in completedOrder.items" :key="idx">
+                            <div class="border-b border-cream-100 pb-2">
+                                <div class="flex justify-between font-bold text-espresso-900">
+                                    <span x-text="item.name + ' x' + item.qty"></span>
+                                    <span x-text="'NT$ ' + (item.price * item.qty)"></span>
+                                </div>
+                                <template x-if="item.isWholeCake">
+                                    <div class="mt-1 bg-amber-500/5 p-2 rounded-lg text-[11px] text-espresso-800 space-y-0.5 border border-amber-500/20">
+                                        <p><span class="text-espresso-600">蛋糕尺寸：</span><span class="font-semibold" x-text="item.options.size"></span></p>
+                                        <p><span class="text-espresso-600">蠟燭規格：</span><span class="font-semibold" x-text="item.options.candle + (item.options.candleNum ? ' (' + item.options.candleNum + ')' : '')"></span></p>
+                                        <p><span class="text-espresso-600">盤叉組數：</span><span class="font-semibold" x-text="item.options.forks"></span></p>
+                                        <p><span class="text-espresso-600">巧克力提字：</span><span class="font-bold text-terracotta" x-text="item.options.cardText || '無提字'"></span></p>
+                                    </div>
+                                </template>
+                                <template x-if="item.isDrink">
+                                    <div class="mt-1 bg-cream-50 p-2 rounded-lg text-[11px] text-espresso-800 space-y-0.5 border border-cream-200/60">
+                                        <p><span class="text-espresso-600">冷熱/甜度：</span><span class="font-semibold text-espresso-900" x-text="item.options.temp + ' / ' + item.options.sweetness"></span></p>
+                                        <p x-show="item.options.note"><span class="text-espresso-600">備註：</span><span x-text="item.options.note"></span></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-between items-center font-bold text-sm text-espresso-900 border-t border-cream-200">
+                    <span>總金額</span>
+                    <span class="text-base text-terracotta" x-text="'NT$ ' + completedOrder.total"></span>
                 </div>
             </div>
-        </section>
 
-    </main>
-
-    <!-- 底部固定按鈕 / 導覽列 -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-warmSand/80 py-3 px-4 shadow-lg z-20">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <div>
-                <div class="text-[11px] text-gray-500">預訂估計總金額</div>
-                <div id="bar-total-price" class="text-lg font-bold text-terracotta">NT$ 0</div>
-            </div>
-
-            <div class="flex items-center space-x-2">
-                <button id="btn-prev" onclick="handlePrevStep()" class="hidden px-4 py-2.5 rounded-xl border border-gray-300 text-gray-600 text-xs font-bold hover:bg-stone-100 transition">
-                    上一步
+            <div class="space-y-2">
+                <button @click="copyOrderSummary" class="w-full py-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-espresso-800 text-xs font-bold transition flex items-center justify-center gap-2">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    <span>複製訂單內容 (發送給官方 LINE 客服)</span>
                 </button>
-                <button id="btn-next" onclick="handleNextStep()" class="px-6 py-2.5 rounded-xl bg-terracotta text-white text-xs font-bold hover:bg-terracottaDark transition shadow-md shadow-terracotta/30 flex items-center space-x-1">
-                    <span id="btn-next-text">填寫取貨時間</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                <button @click="resetApp" class="w-full py-3 rounded-xl bg-espresso-800 text-cream-50 text-xs font-bold hover:bg-espresso-900 transition">
+                    回到首頁 / 繼續預訂
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- 商品規格單選彈窗 Modal -->
-    <div id="option-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
-        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto p-5 animate-fade-in space-y-4">
-            <div class="flex justify-between items-start border-b border-gray-100 pb-3">
+        <!-- ==================== 頁面 4: 店員後台預訂管理 (Staff Admin Portal) ==================== -->
+        <div x-show="currentTab === 'admin'" class="space-y-4">
+            
+            <!-- 店員管理 Header 統計 -->
+            <div class="bg-espresso-900 text-cream-50 p-4 rounded-2xl shadow-lg space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-5 h-5 text-amber-400"></i>
+                        <h2 class="font-bold text-base">店員預訂管理中心</h2>
+                    </div>
+                    <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/30">即時同步</span>
+                </div>
+
+                <!-- 統計數據卡片 -->
+                <div class="grid grid-cols-3 gap-2 pt-1">
+                    <div class="bg-espresso-800/80 p-2.5 rounded-xl border border-cream-200/10 text-center">
+                        <p class="text-[10px] text-cream-300">總預訂單</p>
+                        <p class="text-base font-extrabold text-amber-400" x-text="allOrders.length"></p>
+                    </div>
+                    <div class="bg-espresso-800/80 p-2.5 rounded-xl border border-cream-200/10 text-center">
+                        <p class="text-[10px] text-cream-300">待製作/處理</p>
+                        <p class="text-base font-extrabold text-terracotta" x-text="allOrders.filter(o => o.status === 'pending').length"></p>
+                    </div>
+                    <div class="bg-espresso-800/80 p-2.5 rounded-xl border border-cream-200/10 text-center">
+                        <p class="text-[10px] text-cream-300">待顧客取貨</p>
+                        <p class="text-base font-extrabold text-green-400" x-text="allOrders.filter(o => o.status === 'ready').length"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 搜尋與狀態篩選器 -->
+            <div class="space-y-2">
+                <!-- 搜尋框 -->
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 text-espresso-600 absolute left-3 top-3"></i>
+                    <input type="text" x-model="adminSearch" placeholder="搜尋訂單號碼、姓名或手機..." 
+                           class="w-full bg-white border border-cream-300 rounded-xl pl-9 pr-3 py-2 text-xs text-espresso-900 focus:outline-none focus:ring-2 focus:ring-espresso-800">
+                </div>
+
+                <!-- 篩選 Tab -->
+                <div class="flex space-x-1.5 border-b border-cream-200 pb-2 overflow-x-auto hide-scrollbar">
+                    <button @click="adminFilter = 'all'" 
+                            :class="adminFilter === 'all' ? 'bg-espresso-800 text-white' : 'bg-cream-200/70 text-espresso-600'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">全部</button>
+                    <button @click="adminFilter = 'pending'" 
+                            :class="adminFilter === 'pending' ? 'bg-terracotta text-white' : 'bg-cream-200/70 text-espresso-600'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">待製作</button>
+                    <button @click="adminFilter = 'ready'" 
+                            :class="adminFilter === 'ready' ? 'bg-amber-600 text-white' : 'bg-cream-200/70 text-espresso-600'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">待取貨</button>
+                    <button @click="adminFilter = 'completed'" 
+                            :class="adminFilter === 'completed' ? 'bg-green-700 text-white' : 'bg-cream-200/70 text-espresso-600'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">已核銷取貨</button>
+                </div>
+            </div>
+
+            <!-- 預訂單列表 (Staff View) -->
+            <div class="space-y-3">
+                <template x-for="order in filteredAdminOrders" :key="order.orderNum">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-cream-200 space-y-3 relative">
+                        <!-- 單號與狀態 Badge -->
+                        <div class="flex justify-between items-center border-b border-cream-100 pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-sm text-espresso-900" x-text="order.orderNum"></span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-md font-bold"
+                                      :class="{
+                                          'bg-amber-100 text-amber-800': order.status === 'pending',
+                                          'bg-blue-100 text-blue-800': order.status === 'ready',
+                                          'bg-green-100 text-green-800': order.status === 'completed'
+                                      }" 
+                                      x-text="getStatusLabel(order.status)"></span>
+                            </div>
+                            <span class="text-xs font-bold text-terracotta" x-text="'NT$ ' + order.total"></span>
+                        </div>
+
+                        <!-- 訂購人與取貨關鍵資訊 -->
+                        <div class="text-xs space-y-1 bg-cream-50 p-2.5 rounded-xl border border-cream-200/60">
+                            <div class="flex justify-between">
+                                <span class="text-espresso-600">顧客姓名：</span>
+                                <span class="font-bold text-espresso-900" x-text="order.name + ' (' + order.phone + ')'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-espresso-600">取貨時間：</span>
+                                <span class="font-bold text-terracotta" x-text="order.pickupDate + ' ' + order.pickupTime"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-espresso-600">付款方式：</span>
+                                <span x-text="order.paymentMethod === 'store' ? '現場付款' : '已線上付款'" class="font-semibold text-espresso-800"></span>
+                            </div>
+                        </div>
+
+                        <!-- 備料品項與客製選單內容 (店員核對區) -->
+                        <div class="space-y-2 text-xs">
+                            <p class="font-bold text-espresso-800 text-[11px]">訂購餐點與客製說明：</p>
+                            <template x-for="(item, i) in order.items" :key="i">
+                                <div class="pl-2 border-l-2 border-espresso-800 space-y-0.5">
+                                    <div class="font-bold text-espresso-900 flex justify-between">
+                                        <span x-text="item.name + ' x ' + item.qty"></span>
+                                        <span class="text-espresso-600" x-text="'NT$' + (item.price * item.qty)"></span>
+                                    </div>
+                                    <template x-if="item.isWholeCake">
+                                        <div class="text-[11px] text-espresso-700 bg-amber-500/5 p-2 rounded-lg mt-1 space-y-0.5 border border-amber-500/20">
+                                            <p>・尺寸：<span class="font-semibold" x-text="item.options.size"></span></p>
+                                            <p>・蠟燭：<span class="font-semibold" x-text="item.options.candle + (item.options.candleNum ? ' (' + item.options.candleNum + ')' : '')"></span></p>
+                                            <p>・盤叉：<span class="font-semibold" x-text="item.options.forks"></span></p>
+                                            <p>・提字：<span class="font-bold text-terracotta" x-text="item.options.cardText || '無'"></span></p>
+                                            <p x-show="item.options.note">・備註：<span class="font-semibold text-red-600" x-text="item.options.note"></span></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="item.isDrink">
+                                        <div class="text-[11px] text-espresso-700 bg-cream-50 p-2 rounded-lg mt-1 space-y-0.5 border border-cream-200/60">
+                                            <p>・規格：<span class="font-bold text-espresso-900" x-text="item.options.temp + ' / ' + item.options.sweetness"></span></p>
+                                            <p x-show="item.options.note">・備註：<span class="font-semibold text-red-600" x-text="item.options.note"></span></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- 店員操作按鈕 (更新狀態) -->
+                        <div class="pt-2 flex gap-2 border-t border-cream-100">
+                            <button x-show="order.status === 'pending'" 
+                                    @click="updateOrderStatus(order.orderNum, 'ready')"
+                                    class="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
+                                <i data-lucide="box" class="w-3.5 h-3.5"></i>
+                                <span>完成製作，通知取貨</span>
+                            </button>
+
+                            <button x-show="order.status === 'ready'" 
+                                    @click="updateOrderStatus(order.orderNum, 'completed')"
+                                    class="flex-1 py-2 bg-green-700 hover:bg-green-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                <span>顧客已來店核銷取貨</span>
+                            </button>
+
+                            <button x-show="order.status === 'completed'" 
+                                    @click="updateOrderStatus(order.orderNum, 'pending')"
+                                    class="py-2 px-3 bg-cream-200 text-espresso-800 rounded-xl text-xs font-bold transition">
+                                重設為待處理
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="filteredAdminOrders.length === 0" class="text-center py-8 text-espresso-600 text-xs">
+                    <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                    <p>目前沒有符合此篩選條件的預訂單</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 彈窗 1: 商品詳情與規格選擇 Modal ==================== -->
+        <div x-show="showModal" x-cloak class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity p-0 sm:p-4">
+            <div @click.away="showModal = false" class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[85vh] overflow-y-auto p-5 space-y-4 shadow-2xl">
+                <!-- 彈窗標題與簡介 -->
+                <div class="flex justify-between items-start border-b border-cream-200 pb-3">
+                    <div>
+                        <h3 class="font-bold text-base text-espresso-900" x-text="selectedProduct?.name"></h3>
+                        <p class="text-xs text-espresso-600 mt-1 leading-relaxed" x-text="selectedProduct?.description"></p>
+                    </div>
+                    <button @click="showModal = false" class="p-1.5 rounded-full text-espresso-600 hover:bg-cream-100 transition flex-shrink-0">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- 防呆填寫選項 Form (整塊蛋糕規格與飲品選擇) -->
+                <div class="space-y-4 text-xs">
+                
+                <!-- 飲品專屬選項 (手沖咖啡 / 茶飲) -->
+                <template x-if="selectedProduct?.isDrink">
+                    <div class="space-y-4">
+                        <!-- 1. 冰熱 / 冰量 -->
+                        <div>
+                            <label class="block font-bold text-espresso-800 mb-1.5">1. 選擇溫度/冰量 <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <template x-for="tempOpt in drinkOptions.temps" :key="tempOpt">
+                                    <button @click="modalForm.temp = tempOpt"
+                                            :class="modalForm.temp === tempOpt ? 'border-espresso-800 bg-cream-100 text-espresso-900 font-bold' : 'border-cream-200 text-espresso-600'"
+                                            class="border p-2 rounded-xl text-center transition text-xs">
+                                        <span x-text="tempOpt"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- 2. 甜度 -->
+                        <div>
+                            <label class="block font-bold text-espresso-800 mb-1.5">2. 選擇甜度 <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <template x-for="sweetOpt in drinkOptions.sweets" :key="sweetOpt">
+                                    <button @click="modalForm.sweetness = sweetOpt"
+                                            :class="modalForm.sweetness === sweetOpt ? 'border-espresso-800 bg-cream-100 text-espresso-900 font-bold' : 'border-cream-200 text-espresso-600'"
+                                            class="border p-2 rounded-xl text-center transition text-xs">
+                                        <span x-text="sweetOpt"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- 整塊蛋糕專屬選項 -->
+                <template x-if="selectedProduct?.isWholeCake">
+                    <div class="space-y-4">
+                        <!-- 1. 尺寸選擇 -->
+                        <div>
+                            <label class="block font-bold text-espresso-800 mb-1.5">1. 選擇尺寸 <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <template x-for="sizeOpt in cakeOptions.sizes" :key="sizeOpt.name">
+                                    <button @click="modalForm.size = sizeOpt.name; modalForm.price = sizeOpt.price"
+                                            :class="modalForm.size === sizeOpt.name ? 'border-espresso-800 bg-cream-100 text-espresso-900 font-bold' : 'border-cream-200 text-espresso-600'"
+                                            class="border p-2.5 rounded-xl text-left transition flex justify-between items-center">
+                                        <span x-text="sizeOpt.name"></span>
+                                        <span class="text-terracotta" x-text="'NT$' + sizeOpt.price"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- 2. 食用蠟燭 -->
+                        <div>
+                            <label class="block font-bold text-espresso-800 mb-1.5">2. 食用蠟燭 <span class="text-red-500">*</span></label>
+                            <div class="space-y-1.5">
+                                <template x-for="candleOpt in cakeOptions.candles" :key="candleOpt">
+                                    <label class="border border-cream-200 rounded-xl p-2.5 flex items-center justify-between cursor-pointer"
+                                           :class="modalForm.candle === candleOpt ? 'border-espresso-800 bg-cream-50 font-bold' : ''">
+                                        <div class="flex items-center gap-2">
+                                            <input type="radio" x-model="modalForm.candle" :value="candleOpt" class="text-espresso-800">
+                                            <span x-text="candleOpt"></span>
+                                        </div>
+                                    </label>
+                                </template>
+                            </div>
+                            <!-- 若選擇數字蠟燭，強制跳出欄位填寫數字 -->
+                            <div x-show="modalForm.candle === '數字蠟燭'" class="mt-2 pl-2">
+                                <input type="text" x-model="modalForm.candleNum" placeholder="請註明歲數數字 (如：28)" 
+                                       class="w-full bg-cream-50 border border-cream-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-espresso-800">
+                            </div>
+                        </div>
+
+                        <!-- 3. 盤叉組數 -->
+                        <div>
+                            <label class="block font-bold text-espresso-800 mb-1.5">3. 盤叉餐具組數 <span class="text-red-500">*</span></label>
+                            <select x-model="modalForm.forks" class="w-full bg-cream-50 border border-cream-300 rounded-xl p-2.5 text-xs text-espresso-900">
+                                <template x-for="forkOpt in cakeOptions.forksList" :key="forkOpt">
+                                    <option :value="forkOpt" x-text="forkOpt"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- 4. 巧克力牌提字 (防呆限字) -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="font-bold text-espresso-800">4. 巧克力牌提字 (限15字)</label>
+                                <span class="text-[10px] text-espresso-600" x-text="modalForm.cardText.length + '/15 字'"></span>
+                            </div>
+                            <input type="text" x-model="modalForm.cardText" maxlength="15" placeholder="例如：Happy Birthday Amy!" 
+                                   class="w-full bg-cream-50 border border-cream-300 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-espresso-600">
+                            <p class="text-[10px] text-espresso-600 mt-1">範例：「生日快樂」、「Happy 30th Birthday」</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- 通用數量選擇 -->
                 <div>
-                    <h3 id="modal-title" class="font-bold text-base text-espresso">蛋糕名稱</h3>
-                    <p id="modal-price" class="text-sm font-bold text-terracotta mt-0.5">NT$ 0</p>
+                    <label class="block font-bold text-espresso-800 mb-1.5">數量</label>
+                    <div class="flex items-center gap-3">
+                        <button @click="if(modalForm.qty > 1) modalForm.qty--" class="w-8 h-8 rounded-lg bg-cream-200 text-espresso-900 font-bold flex items-center justify-center">-</button>
+                        <span class="font-bold text-sm text-espresso-900" x-text="modalForm.qty"></span>
+                        <button @click="modalForm.qty++" class="w-8 h-8 rounded-lg bg-cream-200 text-espresso-900 font-bold flex items-center justify-center">+</button>
+                    </div>
                 </div>
-                <button onclick="closeOptionModal()" class="text-gray-400 hover:text-gray-600 p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+
+                <!-- 備註需求 -->
+                <div>
+                    <label class="block font-bold text-espresso-800 mb-1.5">特殊需求備註</label>
+                    <input type="text" x-model="modalForm.note" placeholder="如：微糖少冰、去堅果等客製提醒" 
+                           class="w-full bg-cream-50 border border-cream-300 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-espresso-600">
+                </div>
             </div>
 
-            <!-- 尺寸規格選擇 -->
-            <div>
-                <label class="block text-xs font-bold text-espresso mb-2">選擇尺寸 / 規格 <span class="text-red-500">*</span></label>
-                <div id="modal-size-options" class="grid grid-cols-2 gap-2">
-                    <!-- 動態渲染選項 -->
-                </div>
-            </div>
-
-            <!-- 確定加入按鈕 -->
-            <button onclick="confirmAddToCart()" class="w-full py-3 bg-terracotta text-white font-bold rounded-xl text-sm shadow-md hover:bg-terracottaDark transition">
-                加入預訂清單
+            <!-- 加入購物車按鈕 (或更新變更) -->
+            <button @click="addToCartFromModal" class="w-full py-3.5 bg-espresso-800 hover:bg-espresso-900 text-white rounded-xl font-bold text-xs transition flex justify-between items-center px-4 shadow-lg">
+                <span x-text="editingCartIndex !== null ? '儲存規格變更' : '加入預訂購物車'"></span>
+                <span x-text="'NT$ ' + (modalForm.price * modalForm.qty)"></span>
             </button>
         </div>
     </div>
 
-    <!-- 購物車抽屜 (Drawer) -->
-    <div id="cart-drawer" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity">
-        <div class="absolute right-0 top-0 bottom-0 w-full max-w-xs bg-white shadow-2xl flex flex-col justify-between">
-            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="font-bold text-base text-espresso flex items-center space-x-2">
-                    <i data-lucide="shopping-bag" class="w-5 h-5 text-terracotta"></i>
-                    <span>已選購內容</span>
-                </h3>
-                <button onclick="toggleCartDrawer(false)" class="p-1 text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <div id="drawer-cart-items" class="p-4 flex-1 overflow-y-auto divide-y divide-gray-100 space-y-3">
-                <!-- 動態內容 -->
-            </div>
-
-            <div class="p-4 border-t border-gray-100 space-y-3 bg-stone-50">
-                <div class="flex justify-between font-bold text-sm">
-                    <span>商品小計</span>
-                    <span id="drawer-subtotal-price" class="text-terracotta">NT$ 0</span>
+    <!-- ==================== 彈窗 2: 購物車管理 Drawer Modal ==================== -->
+    <div x-show="showCartModal" x-cloak class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity">
+        <div @click.away="showCartModal = false" class="bg-white w-full max-w-lg rounded-t-3xl max-h-[85vh] overflow-y-auto p-5 space-y-4 animate-slide-up">
+            <div class="flex justify-between items-center border-b border-cream-200 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-espresso-800"></i>
+                    <h3 class="font-bold text-base text-espresso-900">您的購物車預訂清單</h3>
                 </div>
-                <button onclick="toggleCartDrawer(false); goToStep(2);" class="w-full py-2.5 bg-terracotta text-white font-bold rounded-xl text-xs hover:bg-terracottaDark transition">
-                    填寫取貨時間與配件
+                <div class="flex items-center gap-2">
+                    <button @click="showCartModal = false; currentTab = 'menu'" class="text-xs text-terracotta hover:underline font-semibold flex items-center gap-1">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                        <span>新增餐點</span>
+                    </button>
+                    <button @click="showCartModal = false" class="p-1 rounded-full text-espresso-600 hover:bg-cream-100">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div x-show="cart.length === 0" class="text-center py-8 text-espresso-600 text-xs">
+                <i data-lucide="shopping-cart" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
+                <p class="mb-3">購物車目前是空的，快去挑選美味的餐點吧！</p>
+                <button @click="showCartModal = false; currentTab = 'menu'" class="px-4 py-2 bg-espresso-800 text-cream-50 rounded-xl font-bold text-xs">
+                    前往挑選餐點
                 </button>
+            </div>
+
+            <div class="divide-y divide-cream-100 max-h-[50vh] overflow-y-auto">
+                <template x-for="(cartItem, index) in cart" :key="index">
+                    <div class="py-3 flex justify-between items-start gap-3">
+                        <div class="space-y-1 flex-1">
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-xs text-espresso-900" x-text="cartItem.name"></h4>
+                                <button @click="editCartItem(index)" class="text-xs text-terracotta hover:underline font-medium flex items-center gap-0.5">
+                                    <i data-lucide="pencil" class="w-3 h-3"></i>
+                                    <span>修改規格</span>
+                                </button>
+                            </div>
+                            <template x-if="cartItem.isWholeCake">
+                                <div class="text-[11px] text-espresso-700 bg-cream-50 p-2 rounded-lg space-y-0.5 border border-cream-200/60">
+                                    <p>尺寸：<span class="font-semibold" x-text="cartItem.options.size"></span></p>
+                                    <p>蠟燭：<span class="font-semibold" x-text="cartItem.options.candle"></span> <span x-show="cartItem.options.candleNum" x-text="'(' + cartItem.options.candleNum + ')'"></span></p>
+                                    <p>盤叉：<span class="font-semibold" x-text="cartItem.options.forks"></span></p>
+                                    <p>提字：<span class="font-bold text-terracotta" x-text="cartItem.options.cardText || '無'"></span></p>
+                                    <p x-show="cartItem.options.note">備註：<span class="font-semibold text-espresso-900" x-text="cartItem.options.note"></span></p>
+                                </div>
+                            </template>
+                            <template x-if="cartItem.isDrink">
+                                <div class="text-[11px] text-espresso-700 bg-cream-50 p-2 rounded-lg space-y-0.5 border border-cream-200/60">
+                                    <p>規格：<span class="font-semibold text-espresso-900" x-text="cartItem.options.temp + ' / ' + cartItem.options.sweetness"></span></p>
+                                    <p x-show="cartItem.options.note">備註：<span class="font-semibold text-espresso-900" x-text="cartItem.options.note"></span></p>
+                                </div>
+                            </template>
+                            <p x-show="!cartItem.isWholeCake && !cartItem.isDrink && cartItem.options.note" class="text-[11px] text-espresso-600">備註：<span x-text="cartItem.options.note"></span></p>
+                            
+                            <!-- 數量增減與刪除 -->
+                            <div class="flex items-center gap-3 pt-1">
+                                <div class="flex items-center border border-cream-300 rounded-lg overflow-hidden bg-cream-50">
+                                    <button @click="updateCartQty(index, -1)" class="px-2.5 py-0.5 text-espresso-800 font-bold hover:bg-cream-200">-</button>
+                                    <span class="px-3 text-xs font-bold text-espresso-900" x-text="cartItem.qty"></span>
+                                    <button @click="updateCartQty(index, 1)" class="px-2.5 py-0.5 text-espresso-800 font-bold hover:bg-cream-200">+</button>
+                                </div>
+                                <button @click="removeFromCart(index)" class="text-red-500 hover:text-red-700 text-xs flex items-center gap-1 font-medium">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    <span>移除品項</span>
+                                </button>
+                            </div>
+                        </div>
+                        <span class="font-bold text-xs text-espresso-900 whitespace-nowrap" x-text="'NT$ ' + (cartItem.price * cartItem.qty)"></span>
+                    </div>
+                </template>
+            </div>
+
+            <div x-show="cart.length > 0" class="pt-3 border-t border-cream-200 space-y-3">
+                <div class="flex justify-between items-center text-sm font-bold text-espresso-900">
+                    <span>預訂金額總計</span>
+                    <span class="text-base text-terracotta" x-text="'NT$ ' + cartTotal"></span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button @click="showCartModal = false; currentTab = 'menu'" class="py-3 bg-cream-200 text-espresso-800 rounded-xl font-bold text-xs hover:bg-cream-300 transition flex items-center justify-center gap-1">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>新增其他餐點</span>
+                    </button>
+                    <button @click="showCartModal = false; currentTab = 'checkout'" class="py-3 bg-terracotta text-white rounded-xl font-bold text-xs hover:bg-terracotta/90 transition shadow-md">
+                        前往結帳頁面
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- 底部固定購物車 Bar -->
+    <div x-show="cart.length > 0 && currentTab === 'menu'" 
+         class="fixed bottom-0 left-0 right-0 max-w-md md:max-w-5xl mx-auto p-4 bg-gradient-to-t from-cream-100 via-cream-100 to-transparent z-20">
+        <div class="bg-espresso-900 text-cream-50 rounded-2xl p-3.5 shadow-2xl flex items-center justify-between">
+            <div @click="openCartDrawer()" class="flex items-center gap-3 cursor-pointer group">
+                <div class="relative bg-espresso-800 p-2.5 rounded-xl group-hover:scale-105 transition">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-cream-100"></i>
+                    <span class="absolute -top-1.5 -right-1.5 bg-terracotta text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-espresso-900" x-text="cartTotalQty"></span>
+                </div>
+                <div>
+                    <p class="text-[11px] text-cream-300 flex items-center gap-1">
+                        <span>預訂小計</span>
+                        <span class="text-[10px] bg-white/20 px-1.5 py-0.2 rounded text-white">可點擊查看明細</span>
+                    </p>
+                    <p class="font-bold text-base text-cream-50">NT$ <span x-text="cartTotal"></span></p>
+                </div>
+            </div>
+
+            <button @click="currentTab = 'checkout'" class="bg-terracotta hover:bg-terracotta/90 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-1.5">
+                <span>前往結帳</span>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast 訊息提示 -->
+    <div x-show="toast.show" x-transition 
+         class="fixed top-20 left-1/2 -translate-x-1/2 bg-espresso-900/90 text-white text-xs px-4 py-2.5 rounded-full shadow-lg z-50 flex items-center gap-2">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-green-400"></i>
+        <span x-text="toast.message"></span>
+    </div>
+
+    <!-- JavaScript Alpine App Logic -->
     <script>
-        // --- 特色蛋糕產品資料庫 ---
-        const CAKE_DATA = [
-            {
-                id: 'c1',
-                name: '法式經典草莓戚風',
-                category: 'seasonal',
-                description: '採用大湖新鮮草莓，搭配日本中澤鮮奶油與蓬鬆香草戚風。',
-                image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&q=80',
-                options: [
-                    { name: '6 吋 (適合 4-6 人)', price: 880 },
-                    { name: '8 吋 (適合 8-10 人)', price: 1280 }
-                ]
-            },
-            {
-                id: 'c2',
-                name: '濃郁小山園抹茶千層',
-                category: 'slice',
-                description: '嚴選京都小山園若竹抹茶，手作微薄餅皮與濃香生乳餡疊加。',
-                image: 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80',
-                options: [
-                    { name: '切片單片裝', price: 180 },
-                    { name: '8 吋完整切片組合', price: 1380 }
-                ]
-            },
-            {
-                id: 'c3',
-                name: '比利時70%生巧克力塔',
-                category: 'whole',
-                description: '70% 法芙娜甘納許與酥脆塔皮，苦甜濃郁，大人味的優雅首選。',
-                image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80',
-                options: [
-                    { name: '6 吋經典塔', price: 920 },
-                    { name: '8 吋分享塔', price: 1350 }
-                ]
-            },
-            {
-                id: 'c4',
-                name: '小山園抹茶巴斯克',
-                category: 'slice',
-                description: '高溫烘烤半熟流心質感，結合西班牙濃郁乳酪與回甘抹茶香。',
-                image: 'https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80',
-                options: [
-                    { name: '單片切片裝', price: 170 },
-                    { name: '6 吋完整巴斯克', price: 750 }
-                ]
-            }
-        ];
+        function cafeApp() {
+            return {
+                currentTab: 'menu', // 'menu', 'checkout', 'receipt', 'admin'
+                activeCategory: 'coffee',
+                showModal: false,
+                showCartModal: false,
+                editingCartIndex: null, // 用於紀錄目前正在編輯的購物車索引 (null 代表新增)
+                selectedProduct: null,
+                viewOrderReceipt: false,
 
-        // 系統狀態 State
-        let currentStep = 1;
-        let cart = [];
-        let selectedProductForModal = null;
-        let selectedOptionIndex = 0;
+                // 店員後台狀態管理與搜尋
+                adminSearch: '',
+                adminFilter: 'all',
+                allOrders: [
+                    {
+                        orderNum: '#A1001',
+                        name: '陳小姐',
+                        phone: '0912345678',
+                        pickupDate: '2026-10-15',
+                        pickupTime: '14:00 - 14:30',
+                        paymentMethod: 'linepay',
+                        status: 'pending',
+                        total: 1040,
+                        items: [
+                            {
+                                name: '法式經典草莓千層蛋糕',
+                                qty: 1,
+                                price: 880,
+                                isWholeCake: true,
+                                isDrink: false,
+                                options: {
+                                    size: '6 吋 (適合 4-6 人)',
+                                    candle: '數字蠟燭',
+                                    candleNum: '28',
+                                    forks: '預設含 1 組 (5人份)',
+                                    cardText: 'Happy 28th Bday!',
+                                    note: '請附火柴'
+                                }
+                            },
+                            {
+                                name: '手沖耶加雪菲 (日曬)',
+                                qty: 1,
+                                price: 160,
+                                isWholeCake: false,
+                                isDrink: true,
+                                options: {
+                                    temp: '冰 (少冰)',
+                                    sweetness: '無糖 (無加糖)',
+                                    note: ''
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        orderNum: '#A1002',
+                        name: '林先生',
+                        phone: '0987654321',
+                        pickupDate: '2026-10-13',
+                        pickupTime: '15:00 - 15:30',
+                        paymentMethod: 'store',
+                        status: 'ready',
+                        total: 340,
+                        items: [
+                            { name: '日月潭台茶 18 號紅玉紅茶', qty: 1, price: 150, isWholeCake: false, isDrink: true, options: { temp: '熱 (Hot)', sweetness: '微糖 (3分)', note: '' } },
+                            { name: '酪梨燻雞巴馬森可頌', qty: 1, price: 190, isWholeCake: false, isDrink: false, options: { note: '去堅果' } }
+                        ]
+                    }
+                ],
 
-        window.onload = function() {
-            lucide.createIcons();
-            renderCakeList('all');
-            initDatePicker();
-            renderTimeSlots();
-            updateCalculatedPrices();
-        };
+                // 分類資料 (按照指定順序)
+                categories: [
+                    { id: 'coffee', name: '手沖咖啡', icon: 'coffee' },
+                    { id: 'tea', name: '茶飲', icon: 'cup-soda' },
+                    { id: 'light-desserts', name: '輕食與甜點', icon: 'sandwich' },
+                    { id: 'whole-cake', name: '整塊蛋糕(需預定)', icon: 'cake' }
+                ],
 
-        // 渲染蛋糕卡片列表
-        function renderCakeList(category) {
-            const listContainer = document.getElementById('cake-list');
-            listContainer.innerHTML = '';
+                // 菜單品項資料
+                products: [
+                    // 1. 手沖咖啡
+                    {
+                        id: 1,
+                        category: 'coffee',
+                        name: '手沖耶加雪菲 (日曬)',
+                        description: '展現豐富花香與水蜜桃甜香，水果酸甜調性平衡，現點現磨手沖萃取。',
+                        price: 160,
+                        isDrink: true,
+                        isWholeCake: false,
+                        image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 2,
+                        category: 'coffee',
+                        name: '莊園濃縮拿鐵',
+                        description: '選用中深烘焙精品豆，加入香醇鮮乳，口感綿密滑順、榛果焦香韻味悠長。',
+                        price: 150,
+                        isDrink: true,
+                        isWholeCake: false,
+                        image: 'https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=600&q=80'
+                    },
 
-            const filtered = category === 'all' 
-                ? CAKE_DATA 
-                : CAKE_DATA.filter(item => item.category === category);
+                    // 2. 茶飲
+                    {
+                        id: 3,
+                        category: 'tea',
+                        name: '日月潭台茶 18 號紅玉紅茶',
+                        description: '茶湯呈現亮紅琥珀色，天然天然肉桂與薄荷香氣，口感甘甜回甘不苦澀。',
+                        price: 150,
+                        isDrink: true,
+                        isWholeCake: false,
+                        image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 4,
+                        category: 'tea',
+                        name: '靜岡濃抹茶歐蕾',
+                        description: '採用日本靜岡嚴選抹茶粉，搭配濃郁鮮奶，茶香苦甜回甘、口感豐富厚實。',
+                        price: 160,
+                        isDrink: true,
+                        isWholeCake: false,
+                        image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=600&q=80'
+                    },
 
-            filtered.forEach(cake => {
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-2xl overflow-hidden border border-warmSand/60 shadow-sm flex flex-col justify-between';
-                
-                const minPrice = Math.min(...cake.options.map(o => o.price));
+                    // 3. 輕食與甜點
+                    {
+                        id: 5,
+                        category: 'light-desserts',
+                        name: '酪梨燻雞巴馬森可頌',
+                        description: '現烤酥脆可頌夾入新鮮酪梨、煙燻雞肉與特調醬汁，份量充足清爽無負擔。',
+                        price: 190,
+                        isDrink: false,
+                        isWholeCake: false,
+                        image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 6,
+                        category: 'light-desserts',
+                        name: '焦糖布丁切片甜點',
+                        description: '日式手工苦甜焦糖，濃郁蛋香與滑順口感，搭配特調香草打發鮮奶油。',
+                        price: 130,
+                        isDrink: false,
+                        isWholeCake: false,
+                        image: 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=600&q=80'
+                    },
 
-                card.innerHTML = `
-                    <div class="relative h-44 overflow-hidden">
-                        <img src="${cake.image}" alt="${cake.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
-                        <span class="absolute top-2 right-2 bg-espresso/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs">
-                            需提早 2 天預約
-                        </span>
-                    </div>
-                    <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
-                        <div>
-                            <h3 class="font-bold text-base text-espresso">${cake.name}</h3>
-                            <p class="text-xs text-gray-500 line-clamp-2 mt-1">${cake.description}</p>
-                        </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-stone-100">
-                            <div>
-                                <span class="text-[10px] text-gray-400 block">起價</span>
-                                <span class="font-bold text-terracotta text-sm">NT$ ${minPrice}</span>
-                            </div>
-                            <button onclick="openOptionModal('${cake.id}')" class="px-3.5 py-1.5 bg-warmSand text-espresso text-xs font-bold rounded-xl hover:bg-terracotta hover:text-white transition flex items-center space-x-1">
-                                <i data-lucide="plus" class="w-3 h-3"></i>
-                                <span>選購規格</span>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                listContainer.appendChild(card);
-            });
-            lucide.createIcons();
-        }
+                    // 4. 整塊蛋糕 (需預定)
+                    {
+                        id: 7,
+                        category: 'whole-cake',
+                        name: '法式經典草莓千層蛋糕',
+                        description: '選用大湖草莓與香草籽卡士達，多層酥脆手工派皮，香濃酸甜不膩口。含盤叉與蠟燭選項。',
+                        basePrice: 880,
+                        isDrink: false,
+                        isWholeCake: true,
+                        image: 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 8,
+                        category: 'whole-cake',
+                        name: '70% 濃黑巧克力戚風',
+                        description: '比利時深焦糖巧克力、榛果脆粒與苦甜可可鮮奶油，大人系濃郁苦甜風味。',
+                        basePrice: 850,
+                        isDrink: false,
+                        isWholeCake: true,
+                        image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80'
+                    }
+                ],
 
-        function filterCategory(cat) {
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                if (btn.dataset.cat === cat) {
-                    btn.className = 'cat-btn active px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap bg-espresso text-white transition shadow-sm';
-                } else {
-                    btn.className = 'cat-btn px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap bg-white text-espresso/70 hover:bg-warmSand transition border border-warmSand/60';
+                // 飲品防呆選單選項
+                drinkOptions: {
+                    temps: ['冰 (少冰)', '冰 (正常冰)', '冰 (微冰)', '冰 (去冰)', '熱 (Hot)'],
+                    sweets: ['無糖 (無加糖)', '微糖 (3分)', '半糖 (5分)', '全糖 (10分)']
+                },
+
+                // 整塊蛋糕防呆選單選項
+                cakeOptions: {
+                    sizes: [
+                        { name: '6 吋 (適合 4-6 人)', price: 880 },
+                        { name: '8 吋 (適合 8-10 人)', price: 1280 }
+                    ],
+                    candles: ['不需蠟燭', '單支浪漫蠟燭', '數字蠟燭'],
+                    forksList: ['預設含 1 組 (5人份)', '加購 2 組 (10人份 +$20)', '不需盤叉 (環保愛地球)']
+                },
+
+                // 蛋糕 / 商品 Modal 當前選擇狀態
+                modalForm: {
+                    size: '6 吋 (適合 4-6 人)',
+                    price: 880,
+                    candle: '不需蠟燭',
+                    candleNum: '',
+                    forks: '預設含 1 組 (5人份)',
+                    cardText: '',
+                    temp: '冰 (少冰)',
+                    sweetness: '無糖 (無加糖)',
+                    note: '',
+                    qty: 1
+                },
+
+                // 購物車
+                cart: [],
+
+                // 訂單表單
+                orderForm: {
+                    pickupDate: '',
+                    pickupTime: '14:00 - 14:30',
+                    name: '',
+                    phone: '',
+                    taxId: '',
+                    paymentMethod: 'linepay'
+                },
+
+                // 時間選單選項
+                availableTimeSlots: [
+                    '11:00 - 11:30', '11:30 - 12:00', '13:00 - 13:30', 
+                    '14:00 - 14:30', '15:00 - 15:30', '16:00 - 16:30', '17:00 - 17:30'
+                ],
+
+                // 完成的訂單內容
+                completedOrder: {
+                    orderNum: '',
+                    name: '',
+                    phone: '',
+                    pickupDate: '',
+                    pickupTime: '',
+                    paymentMethod: 'linepay',
+                    total: 0,
+                    items: []
+                },
+
+                // Toast 提示
+                toast: { show: false, message: '' },
+
+                initApp() {
+                    // 初始化 Lucide 圖標
+                    this.$nextTick(() => { lucide.createIcons(); });
+                    this.setDefaultPickupDate();
+                },
+
+                showToast(msg) {
+                    this.toast.message = msg;
+                    this.toast.show = true;
+                    setTimeout(() => { this.toast.show = false; }, 2500);
+                },
+
+                get filteredProducts() {
+                    return this.products.filter(p => p.category === this.activeCategory);
+                },
+
+                get filteredAdminOrders() {
+                    return this.allOrders.filter(order => {
+                        const matchesStatus = this.adminFilter === 'all' || order.status === this.adminFilter;
+                        const q = (this.adminSearch || '').toLowerCase().trim();
+                        const matchesQuery = !q || 
+                            order.orderNum.toLowerCase().includes(q) ||
+                            order.name.toLowerCase().includes(q) ||
+                            order.phone.includes(q);
+                        return matchesStatus && matchesQuery;
+                    });
+                },
+
+                getStatusLabel(status) {
+                    const labels = {
+                        'pending': '待製作',
+                        'ready': '待取貨',
+                        'completed': '已核銷取貨'
+                    };
+                    return labels[status] || status;
+                },
+
+                updateOrderStatus(orderNum, newStatus) {
+                    const order = this.allOrders.find(o => o.orderNum === orderNum);
+                    if (order) {
+                        order.status = newStatus;
+                        this.showToast(`訂單 ${orderNum} 狀態已更新為：${this.getStatusLabel(newStatus)}`);
+                    }
+                },
+
+                get cartHasWholeCake() {
+                    return this.cart.some(item => item.isWholeCake);
+                },
+
+                // 計算最短允許預訂日期 (Core 防呆邏輯)
+                get minPickupDate() {
+                    const today = new Date();
+                    const daysToAdd = this.cartHasWholeCake ? 3 : 0;
+                    today.setDate(today.getDate() + daysToAdd);
+                    return today.toISOString().split('T')[0];
+                },
+
+                get minPickupDateFormatted() {
+                    if (!this.minPickupDate) return '';
+                    const d = new Date(this.minPickupDate);
+                    return `${d.getMonth() + 1}月${d.getDate()}日`;
+                },
+
+                setDefaultPickupDate() {
+                    this.orderForm.pickupDate = this.minPickupDate;
+                },
+
+                validateDate() {
+                    if (this.orderForm.pickupDate < this.minPickupDate) {
+                        this.orderForm.pickupDate = this.minPickupDate;
+                        this.showToast('含整塊蛋糕品項最快需 3 天前預訂！');
+                    }
+                },
+
+                openProductModal(item) {
+                    this.selectedProduct = item;
+                    this.editingCartIndex = null; // 設為新增模式
+                    if (item.isWholeCake) {
+                        this.modalForm = {
+                            size: '6 吋 (適合 4-6 人)',
+                            price: item.basePrice,
+                            candle: '不需蠟燭',
+                            candleNum: '',
+                            forks: '預設含 1 組 (5人份)',
+                            cardText: '',
+                            temp: '冰 (少冰)',
+                            sweetness: '無糖 (無加糖)',
+                            note: '',
+                            qty: 1
+                        };
+                    } else {
+                        this.modalForm = {
+                            size: '',
+                            price: item.price,
+                            candle: '',
+                            candleNum: '',
+                            forks: '',
+                            cardText: '',
+                            temp: '冰 (少冰)',
+                            sweetness: '無糖 (無加糖)',
+                            note: '',
+                            qty: 1
+                        };
+                    }
+                    this.showModal = true;
+                    this.$nextTick(() => { lucide.createIcons(); });
+                },
+
+                openCartDrawer() {
+                    this.showCartModal = true;
+                    this.$nextTick(() => { lucide.createIcons(); });
+                },
+
+                editCartItem(index) {
+                    const cartItem = this.cart[index];
+                    if (!cartItem) return;
+
+                    const originalProduct = this.products.find(p => p.id === cartItem.id);
+                    if (!originalProduct) return;
+
+                    this.selectedProduct = originalProduct;
+                    this.editingCartIndex = index;
+
+                    if (cartItem.isWholeCake) {
+                        this.modalForm = {
+                            size: cartItem.options.size,
+                            price: cartItem.price,
+                            candle: cartItem.options.candle,
+                            candleNum: cartItem.options.candleNum || '',
+                            forks: cartItem.options.forks,
+                            cardText: cartItem.options.cardText || '',
+                            temp: '冰 (少冰)',
+                            sweetness: '無糖 (無加糖)',
+                            note: cartItem.options.note || '',
+                            qty: cartItem.qty
+                        };
+                    } else {
+                        this.modalForm = {
+                            size: '',
+                            price: cartItem.price,
+                            candle: '',
+                            candleNum: '',
+                            forks: '',
+                            cardText: '',
+                            temp: cartItem.options?.temp || '冰 (少冰)',
+                            sweetness: cartItem.options?.sweetness || '無糖 (無加糖)',
+                            note: cartItem.options?.note || '',
+                            qty: cartItem.qty
+                        };
+                    }
+
+                    this.showCartModal = false;
+                    this.showModal = true;
+                    this.$nextTick(() => { lucide.createIcons(); });
+                },
+
+                addToCartFromModal() {
+                    const itemData = {
+                        id: this.selectedProduct.id,
+                        name: this.selectedProduct.name,
+                        price: this.modalForm.price,
+                        qty: this.modalForm.qty,
+                        isWholeCake: !!this.selectedProduct.isWholeCake,
+                        isDrink: !!this.selectedProduct.isDrink,
+                        options: this.selectedProduct.isWholeCake 
+                            ? { ...this.modalForm }
+                            : (this.selectedProduct.isDrink 
+                                ? { temp: this.modalForm.temp, sweetness: this.modalForm.sweetness, note: this.modalForm.note } 
+                                : { note: this.modalForm.note })
+                    };
+
+                    if (this.editingCartIndex !== null) {
+                        // 更新購物車既有項目
+                        this.cart[this.editingCartIndex] = itemData;
+                        this.showToast('已更新購物車餐點規格');
+                    } else {
+                        // 新增至購物車
+                        this.cart.push(itemData);
+                        this.showToast('已成功加入預訂購物車');
+                    }
+
+                    this.showModal = false;
+                    this.editingCartIndex = null;
+                    this.setDefaultPickupDate();
+                },
+
+                updateCartQty(index, delta) {
+                    if (this.cart[index]) {
+                        this.cart[index].qty += delta;
+                        if (this.cart[index].qty <= 0) {
+                            this.removeFromCart(index);
+                        }
+                    }
+                },
+
+                removeFromCart(index) {
+                    if (index >= 0 && index < this.cart.length) {
+                        const removedName = this.cart[index].name;
+                        this.cart.splice(index, 1);
+                        this.showToast(`已移除 ${removedName}`);
+                        if (this.cart.length === 0) {
+                            this.showCartModal = false;
+                        }
+                    }
+                },
+
+                get cartTotalQty() {
+                    return this.cart.reduce((sum, item) => sum + item.qty, 0);
+                },
+
+                get cartTotal() {
+                    return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                },
+
+                // 手機號碼格式驗證
+                get isPhoneValid() {
+                    return /^09\d{8}$/.test(this.orderForm.phone);
+                },
+
+                get isFormValid() {
+                    return this.orderForm.name.trim() !== '' && 
+                           this.isPhoneValid && 
+                           this.orderForm.pickupDate !== '' && 
+                           this.orderForm.pickupTime !== '';
+                },
+
+                submitOrder() {
+                    if (!this.isFormValid) return;
+
+                    const randomNum = Math.floor(1000 + Math.random() * 9000);
+                    const orderNum = `#A${randomNum}`;
+
+                    const newOrder = {
+                        orderNum: orderNum,
+                        name: this.orderForm.name,
+                        phone: this.orderForm.phone,
+                        pickupDate: this.orderForm.pickupDate,
+                        pickupTime: this.orderForm.pickupTime,
+                        paymentMethod: this.orderForm.paymentMethod,
+                        status: 'pending',
+                        total: this.cartTotal,
+                        items: JSON.parse(JSON.stringify(this.cart))
+                    };
+
+                    this.completedOrder = newOrder;
+                    this.allOrders.unshift(newOrder); // 同步加入店員管理清單
+
+                    this.viewOrderReceipt = true;
+                    this.currentTab = 'receipt';
+                    this.showToast('預訂單已順利送出！');
+                },
+
+                copyOrderSummary() {
+                    const o = this.completedOrder;
+                    let text = `【Café Lumière 預訂單】\n單號：${o.orderNum}\n姓名：${o.name}\n取貨時間：${o.pickupDate} ${o.pickupTime}\n總金額：NT$ ${o.total}\n\n如有任何變更請回覆此訊息。`;
+                    
+                    const tempInput = document.createElement('textarea');
+                    tempInput.value = text;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+
+                    this.showToast('訂單摘要已複製！可貼上至 LINE');
+                },
+
+                resetApp() {
+                    this.cart = [];
+                    this.orderForm = {
+                        pickupDate: '',
+                        pickupTime: '14:00 - 14:30',
+                        name: '',
+                        phone: '',
+                        taxId: '',
+                        paymentMethod: 'linepay'
+                    };
+                    this.currentTab = 'menu';
+                    this.setDefaultPickupDate();
                 }
-            });
-            renderCakeList(cat);
-        }
-
-        function openOptionModal(cakeId) {
-            selectedProductForModal = CAKE_DATA.find(c => c.id === cakeId);
-            selectedOptionIndex = 0;
-
-            document.getElementById('modal-title').innerText = selectedProductForModal.name;
-
-            const sizeContainer = document.getElementById('modal-size-options');
-            sizeContainer.innerHTML = '';
-            selectedProductForModal.options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = `p-2.5 rounded-xl border text-left text-xs transition ${idx === 0 ? 'border-terracotta bg-terracotta/5 text-terracotta font-bold' : 'border-gray-200 text-espresso'}`;
-                btn.onclick = () => selectModalOption(idx);
-                btn.id = `opt-btn-${idx}`;
-                btn.innerHTML = `
-                    <div class="font-bold">${opt.name}</div>
-                    <div class="text-terracotta mt-0.5">NT$ ${opt.price}</div>
-                `;
-                sizeContainer.appendChild(btn);
-            });
-
-            updateModalPrice();
-            document.getElementById('option-modal').classList.remove('hidden');
-        }
-
-        function selectModalOption(idx) {
-            selectedOptionIndex = idx;
-            selectedProductForModal.options.forEach((_, i) => {
-                const btn = document.getElementById(`opt-btn-${i}`);
-                if (i === idx) {
-                    btn.className = 'p-2.5 rounded-xl border text-left text-xs transition border-terracotta bg-terracotta/5 text-terracotta font-bold';
-                } else {
-                    btn.className = 'p-2.5 rounded-xl border text-left text-xs transition border-gray-200 text-espresso';
-                }
-            });
-            updateModalPrice();
-        }
-
-        function updateModalPrice() {
-            const basePrice = selectedProductForModal.options[selectedOptionIndex].price;
-            document.getElementById('modal-price').innerText = `NT$ ${basePrice}`;
-        }
-
-        function closeOptionModal() {
-            document.getElementById('option-modal').classList.add('hidden');
-        }
-
-        function confirmAddToCart() {
-            const option = selectedProductForModal.options[selectedOptionIndex];
-
-            const item = {
-                id: Date.now(),
-                cakeId: selectedProductForModal.id,
-                name: selectedProductForModal.name,
-                optionName: option.name,
-                price: option.price
-            };
-
-            cart.push(item);
-            closeOptionModal();
-            updateCalculatedPrices();
-        }
-
-        function initDatePicker() {
-            const dateInput = document.getElementById('pickup-date');
-            const today = new Date();
-            
-            // 自動限制最低必須為 +2 天後的日期
-            const minDate = new Date(today);
-            minDate.setDate(minDate.getDate() + 2);
-            
-            const yyyy = minDate.getFullYear();
-            const mm = String(minDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(minDate.getDate()).padStart(2, '0');
-            
-            dateInput.min = `${yyyy}-${mm}-${dd}`;
-            dateInput.value = `${yyyy}-${mm}-${dd}`;
-        }
-
-        function renderTimeSlots() {
-            const slotsContainer = document.getElementById('time-slots');
-            slotsContainer.innerHTML = '';
-            
-            const times = ['11:30 - 13:00', '13:00 - 15:00', '15:00 - 17:00', '17:00 - 19:00'];
-            times.forEach((t, index) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = `time-slot-btn py-2 text-xs font-bold rounded-xl border transition ${index === 0 ? 'bg-terracotta text-white border-terracotta' : 'bg-stone-50 text-espresso border-gray-200'}`;
-                btn.innerText = t;
-                btn.onclick = () => selectTimeSlot(btn, t);
-                slotsContainer.appendChild(btn);
-            });
-            document.getElementById('selected-time').value = times[0];
-        }
-
-        function selectTimeSlot(btn, time) {
-            document.querySelectorAll('.time-slot-btn').forEach(b => {
-                b.className = 'time-slot-btn py-2 text-xs font-bold rounded-xl border transition bg-stone-50 text-espresso border-gray-200';
-            });
-            btn.className = 'time-slot-btn py-2 text-xs font-bold rounded-xl border transition bg-terracotta text-white border-terracotta';
-            document.getElementById('selected-time').value = time;
-        }
-
-        function toggleDeliveryInfo(isCourier) {
-            const note = document.getElementById('courier-note');
-            if (isCourier) {
-                note.classList.remove('hidden');
-            } else {
-                note.classList.add('hidden');
             }
-        }
-
-        function handleCandleChange() {
-            const val = document.getElementById('candle-option').value;
-            const box = document.getElementById('candle-num-box');
-            if (val === 'numbers') {
-                box.classList.remove('hidden');
-            } else {
-                box.classList.add('hidden');
-            }
-        }
-
-        function updateCalculatedPrices() {
-            let cakeSubtotal = cart.reduce((sum, item) => sum + item.price, 0);
-
-            // 巧克力牌 +NT$30
-            const pipingText = document.getElementById('piping-text-input')?.value.trim() || '';
-            const pipingFee = pipingText.length > 0 ? 30 : 0;
-
-            // 保冷劑 +NT$20
-            const iceFee = parseInt(document.getElementById('icepack-option')?.value || '0', 10);
-
-            const total = cakeSubtotal + pipingFee + iceFee;
-
-            document.getElementById('bar-total-price').innerText = `NT$ ${total}`;
-            document.getElementById('drawer-subtotal-price').innerText = `NT$ ${cakeSubtotal}`;
-
-            // 更新 Badge
-            const badge = document.getElementById('cart-badge');
-            if (cart.length > 0) {
-                badge.innerText = cart.length;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
-
-        function goToStep(step) {
-            currentStep = step;
-            
-            document.getElementById('step-1').classList.add('hidden');
-            document.getElementById('step-2').classList.add('hidden');
-            document.getElementById('step-3').classList.add('hidden');
-
-            document.getElementById(`step-${step}`).classList.remove('hidden');
-
-            for (let i = 1; i <= 3; i++) {
-                const tab = document.getElementById(`step-tab-${i}`);
-                if (i === step) {
-                    tab.className = 'flex-1 text-center text-terracotta font-bold flex flex-col items-center';
-                    tab.children[0].className = 'w-6 h-6 rounded-full bg-terracotta text-white flex items-center justify-center mb-1 text-xs';
-                } else {
-                    tab.className = 'flex-1 text-center text-gray-400 flex flex-col items-center';
-                    tab.children[0].className = 'w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center mb-1 text-xs';
-                }
-            }
-
-            const prevBtn = document.getElementById('btn-prev');
-            const nextBtnText = document.getElementById('btn-next-text');
-
-            if (step === 1) {
-                prevBtn.classList.add('hidden');
-                nextBtnText.innerText = '填寫取貨時間';
-            } else if (step === 2) {
-                prevBtn.classList.remove('hidden');
-                nextBtnText.innerText = '確認並建立訂單';
-            } else if (step === 3) {
-                prevBtn.classList.add('hidden');
-                nextBtnText.innerText = '完成預訂';
-                renderStep3Voucher();
-            }
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function handleNextStep() {
-            if (currentStep === 1) {
-                if (cart.length === 0) {
-                    showNotice('請至少挑選一項蛋糕！');
-                    return;
-                }
-                goToStep(2);
-            } else if (currentStep === 2) {
-                if (!validateStep2Inputs()) return;
-                goToStep(3);
-            } else if (currentStep === 3) {
-                showNotice('訂單已完成！');
-            }
-        }
-
-        function handlePrevStep() {
-            if (currentStep > 1) {
-                goToStep(currentStep - 1);
-            }
-        }
-
-        function validateStep2Inputs() {
-            const date = document.getElementById('pickup-date').value;
-            const time = document.getElementById('selected-time').value;
-            const name = document.getElementById('cust-name').value.trim();
-            const phone = document.getElementById('cust-phone').value.trim();
-
-            if (!date) {
-                showNotice('請選擇取貨日期！');
-                return false;
-            }
-            if (!time) {
-                showNotice('請選擇取貨時段！');
-                return false;
-            }
-            if (!name) {
-                showNotice('請填寫訂購人姓名！');
-                document.getElementById('cust-name').focus();
-                return false;
-            }
-            if (!phone || !/^09\d{8}$/.test(phone)) {
-                showNotice('請填寫正確的台灣手機號碼 (格式：09xxxxxxxx)！');
-                document.getElementById('cust-phone').focus();
-                return false;
-            }
-
-            const candleVal = document.getElementById('candle-option').value;
-            if (candleVal === 'numbers') {
-                const numInput = document.getElementById('candle-num-input').value.trim();
-                if (!numInput) {
-                    showNotice('請輸入數字蠟燭的數字！');
-                    document.getElementById('candle-num-input').focus();
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        function showNotice(msg) {
-            let toast = document.getElementById('custom-toast');
-            if (!toast) {
-                toast = document.createElement('div');
-                toast.id = 'custom-toast';
-                toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-espresso text-white text-xs px-4 py-3 rounded-xl shadow-lg border border-warmSand/30 transition-all duration-300 opacity-0 pointer-events-none';
-                document.body.appendChild(toast);
-            }
-            toast.innerText = msg;
-            toast.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 2500);
-        }
-
-        function renderStep3Voucher() {
-            const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-            const date = document.getElementById('pickup-date').value;
-            const time = document.getElementById('selected-time').value;
-            const name = document.getElementById('cust-name').value.trim();
-            const phone = document.getElementById('cust-phone').value.trim();
-            const notes = document.getElementById('cust-notes').value.trim();
-
-            document.getElementById('res-order-id').innerText = `#${orderId}`;
-            document.getElementById('res-pickup-time').innerText = `${date} ${time}`;
-            document.getElementById('res-cust-name').innerText = name;
-            document.getElementById('res-cust-phone').innerText = phone;
-
-            // 客製配件渲染
-            const sliceText = document.getElementById('slice-option').options[document.getElementById('slice-option').selectedIndex].text;
-            const cutleryText = document.getElementById('cutlery-option').options[document.getElementById('cutlery-option').selectedIndex].text;
-            
-            const candleOption = document.getElementById('candle-option').value;
-            let candleText = document.getElementById('candle-option').options[document.getElementById('candle-option').selectedIndex].text;
-            if (candleOption === 'numbers') {
-                const num = document.getElementById('candle-num-input').value.trim();
-                candleText = `數字蠟燭 (${num} 號)`;
-            }
-
-            const pipingText = document.getElementById('piping-text-input').value.trim();
-            const iceText = document.getElementById('icepack-option').options[document.getElementById('icepack-option').selectedIndex].text;
-
-            const detailsList = document.getElementById('res-custom-details');
-            detailsList.innerHTML = `
-                <li>• 預先切片：${sliceText}</li>
-                <li>• 盤叉餐具：${cutleryText}</li>
-                <li>• 慶生蠟燭：${candleText}</li>
-                <li>• 巧克力手寫字：${pipingText ? pipingText + ' (+NT$ 30)' : '無'}</li>
-                <li>• 保冷車程：${iceText}</li>
-            `;
-
-            // 品項渲染
-            const itemsContainer = document.getElementById('res-items-list');
-            itemsContainer.innerHTML = '';
-            cart.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'py-2 flex justify-between items-center text-xs';
-                div.innerHTML = `
-                    <div>
-                        <span class="font-bold text-espresso">${item.name}</span>
-                        <span class="text-gray-400 text-[10px] block">${item.optionName}</span>
-                    </div>
-                    <div class="font-bold text-terracotta">NT$ ${item.price}</div>
-                `;
-                itemsContainer.appendChild(div);
-            });
-
-            if (notes) {
-                document.getElementById('res-notes').innerText = notes;
-                document.getElementById('res-notes-container').classList.remove('hidden');
-            } else {
-                document.getElementById('res-notes-container').classList.add('hidden');
-            }
-
-            // 金額
-            let subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-            const pipingFee = pipingText.length > 0 ? 30 : 0;
-            const iceFee = parseInt(document.getElementById('icepack-option').value || '0', 10);
-            const grandTotal = subtotal + pipingFee + iceFee;
-
-            document.getElementById('res-total-price').innerText = `NT$ ${grandTotal}`;
-
-            // 產生 QR Code
-            document.getElementById('qrcode').innerHTML = '';
-            new QRCode(document.getElementById('qrcode'), {
-                text: JSON.stringify({ id: orderId, name, phone, date, time, grandTotal }),
-                width: 130,
-                height: 130,
-                colorDark : "#2C221E",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-        }
-
-        function copyOrderDetails() {
-            const orderId = document.getElementById('res-order-id').innerText;
-            const pickupTime = document.getElementById('res-pickup-time').innerText;
-            const custName = document.getElementById('res-cust-name').innerText;
-            const custPhone = document.getElementById('res-cust-phone').innerText;
-            const totalPrice = document.getElementById('res-total-price').innerText;
-            
-            let text = `【Maison Pâtisserie 蛋糕預訂憑證】\n`;
-            text += `訂單編號：${orderId}\n`;
-            text += `取貨時間：${pickupTime}\n`;
-            text += `訂購人：${custName} (${custPhone})\n`;
-            text += `現場應付總額：${totalPrice}\n\n`;
-            text += `訂購品項：\n`;
-            cart.forEach(item => {
-                text += `- ${item.name} (${item.optionName}) $${item.price}\n`;
-            });
-            text += `\n請憑此訊息或 QR Code 至門市取貨，謝謝！`;
-
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-
-            showNotice('預訂明細已複製到剪貼簿！');
-        }
-
-        function resetOrder() {
-            cart = [];
-            document.getElementById('piping-text-input').value = '';
-            document.getElementById('cust-name').value = '';
-            document.getElementById('cust-phone').value = '';
-            document.getElementById('cust-notes').value = '';
-            document.getElementById('candle-num-input').value = '';
-            document.getElementById('candle-option').value = 'none';
-            handleCandleChange();
-            updateCalculatedPrices();
-            goToStep(1);
-        }
-
-        // 購物車 Drawer
-        function toggleCartDrawer(show) {
-            const drawer = document.getElementById('cart-drawer');
-            if (show) {
-                renderDrawerCart();
-                drawer.classList.remove('hidden');
-            } else {
-                drawer.classList.add('hidden');
-            }
-        }
-
-        function renderDrawerCart() {
-            const container = document.getElementById('drawer-cart-items');
-            container.innerHTML = '';
-
-            if (cart.length === 0) {
-                container.innerHTML = '<div class="text-center text-xs text-gray-400 py-10">預訂清單目前是空的</div>';
-                return;
-            }
-
-            cart.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'py-2 flex justify-between items-center text-xs';
-                div.innerHTML = `
-                    <div>
-                        <div class="font-bold text-espresso">${item.name}</div>
-                        <div class="text-gray-400 text-[10px]">${item.optionName}</div>
-                        <div class="text-terracotta font-bold mt-0.5">NT$ ${item.price}</div>
-                    </div>
-                    <button onclick="removeFromCart(${index})" class="text-gray-300 hover:text-red-500 p-1">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                `;
-                container.appendChild(div);
-            });
-            lucide.createIcons();
-        }
-
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            updateCalculatedPrices();
-            renderDrawerCart();
         }
     </script>
 </body>
