@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <!-- 設定頁面編碼為 UTF-8 -->
+    <meta charset="UTF-8">
+    <!-- 關鍵：讓網頁在行動裝置上能正確縮放和顯示 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[您的姓名] | 個人作品集與專業介紹</title>
+
+    <!-- 💡 【注意】這裡應該連結您外部的 CSS 檔案 (例如：style.css) -->
+    <style>
+        /* 🎨 全域重置與基礎設定 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9; /* 給一個輕微的底色，避免單調 */
+        }
+
+        /* 通用區塊間距 */
+        .content-section {
+            padding: 80px 40px;
+            max-width: 1200px;
+            margin: 0 auto; /* 使所有主要內容區塊居中 */
+        }
+        
+        /* ==================== HEADER & NAV STYLING ==================== */
+        header {
+            background: white;
+            padding: 40px 80px;
+            display: flex;
+            flex-direction: column; /* 讓標題和副標語垂直堆疊 */
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        .logo h1 {
+            margin-bottom: 5px;
+            font-size: 3em;
+            color: #007bff; /* 定義一個主要品牌色 */
+        }
+        header .tagline {
+             font-size: 1.2em;
+             color: #666;
+        }
+
+        /* 導航欄 - 使用 Flexbox 使連結水平排列並居中 */
+        nav {
+            background: #333;
+            position: sticky; /* 固定在滾動頁面最上方，方便用戶切換區塊 */
+            top: 0;
+            z-index: 100;
+            width: 100%;
+        }
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex; /* 使 nav 裡的 li 水平排列 */
+            justify-content: center; /* 使所有連結在水平方向居中 */
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            display: block;
+            transition: background-color 0.3s;
+        }
+        nav a:hover {
+            background-color: #0056b3; /* 滑鼠懸停的顏色 */
+        }
+
+        /* ==================== BUTTON & LINK STYLING ==================== */
+        .cta-button, .view-details-button, .submit-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+            cursor: pointer; /* 指出這是一個可點擊的按鈕 */
+        }
+        .cta-button:hover, .view-details-button:hover, .submit-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        /* ==================== SECTION STYLING ==================== */
+
+        /* 關於我區塊 */
+        .about-container p, .about-container li {
+             margin-bottom: 15px;
+        }
+        h3 {
+            border-left: 4px solid #007bff; /* 用邊框加強標題的視覺焦點 */
+            padding-left: 10px;
+        }
+
+        /* 作品集區塊 - 【Flexbox核心邏輯】 */
+        .project-grid {
+            display: flex;             /* 啟動 Flexbox 佈局，使子元素成行排列 */
+            flex-wrap: wrap;           /* 【關鍵】允許項目在空間不足時自動換行 */
+            gap: 16px;                 /* 設定子元素之間的間距為 16px */
+            justify-content: center;   /* 將所有卡片組件在水平方向上置中對齊 */
+        }
+
+        .project-card {
+            flex-basis: calc(30.5% - 10px); /* 設定一個基礎寬度，讓每行顯示約三個 card */
+            border: 1px solid #eee;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s; /* 增加互動性 */
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px); /* 稍微向上移動的動畫效果 */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ==================== MEDIA QUERY STYLING ==================== */
+
+        @media (max-width: 768px) {
+            /* 讓作品集卡片由三欄式變為單欄式堆疊 */
+            .project-grid {
+                flex-direction: column;
+                align-items: center; /* 確保卡片在垂直方向上居中對齊 */
+            }
+            .project-card {
+                width: 100%; /* 讓每個卡片佔滿整個寬度 */
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .project-grid .project-card {
+                flex-basis: calc(48% - 16px / 2); /* 讓每行顯示兩個卡片 */
+            }
+        }
+
+        @media (max-width: 600px) {
+            .project-grid .project-card {
+                flex-basis: calc(100% - 16px); 
+            }
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 80px;
+        }
+        footer a {
+            color: white;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================== -->
+    <!-- 1. HEADER - 網站頂部，包含 Logo 和主要標題 -->
+    <!-- 這是所有頁面都會出現的元素。 -->
+    <!-- ============================== -->
+    <header>
+        <div class="logo">
+            <!-- 您的姓名或個人品牌Logo -->
+            <h1>[您的名字]</h1>
+        </div>
+        <p class="tagline">[副標語：例如，專注於以數據驅動的UX設計師]</p>
+
+        <!-- 🚀 CALL TO ACTION (首頁最醒目的按鈕) -->
+        <a href="#portfolio" class="cta-button">查看我的作品集</a>
+    </header>
+
+
+    <!-- ============================== -->
+    <!-- 2. NAV - 導航欄，讓用戶在網站內移動 -->
+    <!-- 必須包含所有主要區塊的錨點 (Anchor Links)。 -->
+    <!-- ============================== -->
+    <nav>
+        <ul>
+            <li><a href="#about">關於我</a></li>
+            <li><a href="#portfolio">作品集</a></li>
+            <li><a href="#skills">技能與經驗</a></li>
+            <li><a href="#contact">聯繫方式</a></li>
+        </ul>
+    </nav>
+
+
+    <!-- ============================== -->
+    <!-- 3. MAIN - 網站的主要內容區域，所有區塊都放在此處。 -->
+    <!-- ============================== -->
+    <main>
+
+        <!-- A. SECTION: Hero/Introduction (首頁開場白) -->
+        <section id="hero" class="content-section hero-section">
+            <h2>您好，我是 [您的名字]！</h2>
+            <p>我致力於解決複雜的用戶體驗問題，將商業需求轉化為直觀、高效的產品設計。歡迎探索我的作品。</p>
+        </section>
+
+        <!-- B. SECTION: About Me (關於我) -->
+        <section id="about" class="content-section">
+            <h3>🧠 關於我 (About Me)</h3>
+            <div class="about-container">
+                <!-- 這裡放您的專業故事和價值觀描述 -->
+                <p>【請撰寫：我是如何成為這個職業的？我的核心驅動力是什麼？】...</p>
+                <h4>我的設計理念</h4>
+                <ul>
+                    <li>🚀 **以數據為導向 (Data-Driven)：** 所有決策都基於實際用戶行為和數據分析。</li>
+                    <li>🤝 **同理心與溝通：** 視用戶角度思考，並與跨部門夥伴保持高效的溝通。</li>
+                    <li>✨ **持續學習：** 追蹤最新技術趨勢，不斷優化個人能力邊界。</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- C. SECTION: Portfolio (作品集) -->
+        <section id="portfolio" class="content-section">
+            <h3>📂 我的作品集 (Portfolio)</h3>
+            <p class="intro-text">這裡展示了我在不同產業和挑戰中取得的成果。請點擊了解詳情。</p>
+
+            <!-- 每個專案都應該用 <article> 或 <figure> 包裝，代表一個獨立的內容塊 -->
+            <div class="project-grid">
+                <!-- --- 個別作品卡片範例 1 --- -->
+                <article class="project-card">
+                    <h4>[專案名稱：電子商務重設計]</h4>
+                    <p class="subtitle">角色：UX/UI 設計師 | 關鍵技術：Figma, Prototype</p>
+                    <!-- 最重要的內容，用數字量化成果 -->
+                    <p class="impact-summary">👉 **成果亮點：** 成功將結帳流程的放棄率降低了 15%，營收提升 8%。</p>
+                    <a href="/project/ecommerce" class="view-details-button">查看完整案例 →</a>
+                </article>
+
+                <!-- --- 個別作品卡片範例 2 --- -->
+                <article class="project-card">
+                    <h4>[專案名稱：內部管理系統建構]</h4>
+                    <p class="subtitle">角色：產品經理 PM | 關鍵技術：用戶訪談, Agile</p>
+                     <!-- 最重要的內容，用數字量化成果 -->
+                    <p class="impact-summary">👉 **成果亮點：** 導入新系統後，部門的報告生成時間從一天縮短到幾小時。</p>
+                    <a href="/project/internal-tool" class="view-details-button">查看完整案例 →</a>
+                </article>
+
+                <!-- (您可以重複添加更多 <article> 來展示更多專案) -->
+
+            </div>
+        </section>
+
+
+        <!-- D. SECTION: Skills & Experience (技能與經歷) -->
+        <section id="skills" class="content-section">
+            <h3>🛠️ 專業技能與經歷</h3>
+
+            <h4>技術能力 (Hard Skills)</h4>
+            <!-- 可以用列表或圖標來展示工具，不要只用文字堆疊 -->
+            <ul>
+                <li>🎨 設計工具：Figma, Sketch, Adobe XD</li>
+                <li>💻 開發語言：HTML5, CSS3, JavaScript (可依您職業調整)</li>
+                <li>📊 分析工具：Google Analytics, Tableau</li>
+            </ul>
+
+            <h4>工作經歷 (Work Experience - 用時間軸 Timeline 呈現最佳)</h4>
+            <div class="timeline">
+                <!-- 工作紀錄範例 -->
+                <article class="job-entry">
+                    <h5>資深產品設計師 (Senior Product Designer)</h5>
+                    <p class="company">【某科技公司】 | 2021年 - Present</p>
+                    <p>負責主導大型 B2B SaaS 系統的整體用戶體驗規劃與迭代...</p>
+                </article>
+            </div>
+
+        </section>
+
+
+        <!-- E. SECTION: Contact (聯繫方式) -->
+        <section id="contact" class="content-section contact-form-section">
+            <h3>📬 期待您的合作</h3>
+            <p>無論您有什麼專案或疑問，歡迎隨時與我取得聯繫。我很樂意為您提供最專業的建議。</p>
+
+             <!-- 💡 實際網站會放置一個表單 -->
+            <form class="contact-form">
+                <label for="name">姓名:</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="email">電子郵件:</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="message">訊息內容:</label>
+                <textarea id="message" name="message" rows="6" required></textarea>
+
+                <button type="submit" class="cta-button submit-button">發送詢問</button>
+            </form>
+
+             <!-- 社交媒體連結 -->
+            <div class="social-links">
+                <span>💼 <a href="[您的LinkedIn網址]">LinkedIn</a></span> |
+                <span>🔗 <a href="[您的GitHub/作品集網址]">作品集網站</a></span>
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- ============================== -->
+    <!-- 4. FOOTER - 頁腳，包含版權資訊和輔助連結。 -->
+    <!-- ============================== -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 [您的姓名]. All Rights Reserved.</p>
+            <!-- 提供一個快速回傳到頂部或聯絡的入口 -->
+            <nav aria-label="網站輔助連結">
+                <a href="#hero">回頁首</a> |
+                <span>Email: <a href="mailto:your@email.com">您@電郵。com</a></span>
+            </nav>
+        </div>
+    </footer>
+
+</body>
+</html>
