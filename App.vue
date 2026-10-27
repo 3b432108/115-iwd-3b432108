@@ -1,85 +1,141 @@
 <script setup>
 import { ref, computed } from 'vue'
 
-// 使用 ref 宣告綁定輸入框的字串資料
-const inputText = ref('')
+// 宣告身高（cm）與體重（kg）的響應式狀態
+const height = ref('')
+const weight = ref('')
 
-// 使用 computed 計算輸入內容的字數長度
-const textLength = computed(() => {
-  return inputText.value.length
+// 使用 computed 計算 BMI 值：體重(kg) / (身高(m) * 身高(m))
+const bmi = computed(() => {
+  const h = parseFloat(height.value) / 100
+  const w = parseFloat(weight.value)
+
+  if (!h || !w || h <= 0 || w <= 0) {
+    return null
+  }
+
+  // 計算並四捨五入保留一位小數
+  return (w / (h * h)).toFixed(1)
+})
+
+// 使用 computed 自動判斷 BMI 體型狀態
+const bmiStatus = computed(() => {
+  if (!bmi.value) return null
+
+  const val = parseFloat(bmi.value)
+  if (val < 18.5) return { text: '體重過輕', color: '#3182ce' }
+  if (val < 24) return { text: '健康體位', color: '#38a169' }
+  if (val < 27) return { text: '過重', color: '#dd6b20' }
+  return { text: '肥胖', color: '#e53e3e' }
 })
 </script>
 
 <template>
-  <div class="container">
-    <h2>即時字數計數器</h2>
+  <div class="bmi-card">
+    <h2>BMI 體重指數計算機</h2>
 
-    <!-- 使用 v-model 雙向綁定 inputText -->
-    <input
-      v-model="inputText"
-      type="text"
-      placeholder="請在此輸入文字..."
-      class="input-field"
-    />
+    <div class="input-group">
+      <label>身高 (cm)：</label>
+      <input
+        v-model.number="height"
+        type="number"
+        placeholder="例如：170"
+        min="0"
+      />
+    </div>
 
-    <!-- 即時顯示輸入內容 -->
+    <div class="input-group">
+      <label>體重 (kg)：</label>
+      <input
+        v-model.number="weight"
+        type="number"
+        placeholder="例如：65"
+        min="0"
+      />
+    </div>
+
     <div class="result-box">
-      <p><strong>目前內容：</strong> {{ inputText || '（尚未輸入）' }}</p>
-      <!-- 使用 computed 算出的字數 -->
-      <p><strong>字數統計：</strong> <span class="highlight">{{ textLength }}</span> 個字</p>
+      <div v-if="bmi">
+        <p class="bmi-score">BMI 數值：<span>{{ bmi }}</span></p>
+        <p class="bmi-status" :style="{ color: bmiStatus.color }">
+          體型狀態：<strong>{{ bmiStatus.text }}</strong>
+        </p>
+      </div>
+      <p v-else class="placeholder">請輸入有效的身高與體重資料</p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.container {
-  max-width: 480px;
-  margin: 30px auto;
-  padding: 20px;
+.bmi-card {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   background-color: #ffffff;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
 h2 {
+  text-align: center;
   color: #2c3e50;
   margin-top: 0;
-  margin-bottom: 20px;
-  text-align: center;
+  margin-bottom: 24px;
 }
 
-.input-field {
-  width: 100%;
-  padding: 10px 14px;
+.input-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #4a5568;
+}
+
+.input-group input {
+  padding: 10px 12px;
   font-size: 16px;
-  border: 2px solid #ddd;
+  border: 1px solid #cbd5e0;
   border-radius: 6px;
-  box-sizing: border-box;
   outline: none;
   transition: border-color 0.2s;
 }
 
-.input-field:focus {
+.input-group input:focus {
   border-color: #42b883;
 }
 
 .result-box {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  line-height: 1.6;
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #f7fafc;
+  border-radius: 8px;
+  text-align: center;
 }
 
-.result-box p {
-  margin: 8px 0;
-  color: #333;
+.bmi-score {
+  font-size: 1.25rem;
+  margin: 0 0 8px 0;
+  color: #2d3748;
 }
 
-.highlight {
-  color: #42b883;
+.bmi-score span {
+  font-size: 1.75rem;
   font-weight: bold;
-  font-size: 1.2rem;
+  color: #42b883;
+}
+
+.bmi-status {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.placeholder {
+  color: #a0aec0;
+  margin: 0;
 }
 </style>
